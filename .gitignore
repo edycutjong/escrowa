@@ -1,0 +1,23 @@
+# Node dependencies and builds
+node_modules/
+.next/
+out/
+build/
+dist/
+.env*.local
+board/node_modules/
+board/.next/
+board/out/
+
+# Rust build artifacts
+target/
+**/*.rs.bk
+
+# Test and coverage
+coverage/
+board/coverage/
+.lighthouseci/
+
+# OS-specific files
+.DS_Store
+Thumbs.db

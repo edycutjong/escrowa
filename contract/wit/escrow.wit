@@ -1,0 +1,32 @@
+package t3n:escrow;
+
+interface host {
+    kv-get: func(namespace: string, key: string) -> result<string, string>;
+    kv-set: func(namespace: string, key: string, value: string) -> result<string, string>;
+
+    sign-secp256k1: func(wallet-address: string, message-hash: string) -> result<string, string>;
+    issue-sd-jwt: func(claims-json: string) -> result<string, string>;
+
+    outbox-post: func(url: string, body: string, idempotency-key: string) -> result<string, string>;
+
+    http-post-placeholder: func(url: string, template-body: string, user-did: string) -> result<string, string>;
+}
+
+world escrow {
+    import host;
+
+    record contract-input {
+        function-name: string,
+        input-json: string,
+    }
+
+    record contract-output {
+        output-json: string,
+    }
+
+    variant contract-error {
+        err(string)
+    }
+
+    export dispatch: func(input: contract-input) -> result<contract-output, contract-error>;
+}

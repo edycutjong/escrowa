@@ -2,6 +2,7 @@
   "name": "board",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,7 +11,7 @@
     "lint:fix": "eslint --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --silent",
     "ci": "npm run lint && npm run typecheck && npm run test",
     "e2e": "npx playwright test",
     "e2e:ui": "npx playwright test --ui",

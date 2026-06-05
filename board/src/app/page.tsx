@@ -181,12 +181,12 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col selection:bg-emerald-500 selection:text-slate-900">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col selection:bg-emerald-500 selection:text-slate-900 overflow-x-hidden w-full">
       
       {/* HEADER */}
       <header className="border-b border-slate-800 bg-slate-900/40 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-18 flex items-center justify-between">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-slate-950 text-xl shadow-lg shadow-emerald-500/20">
               E
             </div>
@@ -201,26 +201,26 @@ export default function Dashboard() {
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={handleSeed}
               disabled={isSeeding}
-              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition duration-200 text-sm font-medium border border-slate-700 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition duration-200 text-xs sm:text-sm font-medium border border-slate-700 flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              {isSeeding ? "Resetting..." : "Reset & Seed Scenarios"}
+              {isSeeding ? "Resetting..." : <><span className="hidden sm:inline">Reset & </span>Seed</>}
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 transition duration-200 text-slate-950 font-semibold text-sm shadow-md shadow-emerald-500/10 cursor-pointer"
+              className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 transition duration-200 text-slate-950 font-semibold text-xs sm:text-sm shadow-md shadow-emerald-500/10 cursor-pointer"
             >
-              + Create Milestone
+              + Create<span className="hidden sm:inline"> Milestone</span>
             </button>
           </div>
         </div>
       </header>
 
       {/* DASHBOARD STATS */}
-      <div className="max-w-7xl mx-auto px-6 w-full mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 w-full mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-slate-900/30 border border-slate-850 p-6 rounded-2xl">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Value Secured</span>
           <div className="text-3xl font-bold mt-2 text-slate-50">
@@ -245,7 +245,7 @@ export default function Dashboard() {
       </div>
 
       {/* MAIN CONTAINER */}
-      <main className="max-w-7xl mx-auto px-6 w-full flex-1 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 w-full flex-1 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* MILESTONE LIST */}
         <section className="lg:col-span-7 flex flex-col gap-4">
@@ -500,7 +500,7 @@ export default function Dashboard() {
 
       {/* FOOTER */}
       <footer className="border-t border-slate-850 bg-slate-900/10 py-6 mt-12">
-        <div className="max-w-7xl mx-auto px-6 text-center text-slate-500 text-xs flex justify-between">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 text-center text-slate-500 text-xs flex justify-between gap-4">
           <span>Terminal 3 Agent Dev Kit Bounty Challenge (beta)</span>
           <span className="font-mono">Secure TEE Sandbox Node V0.4.9</span>
         </div>

@@ -355,6 +355,9 @@ describe("Next.js Application & Configuration Suite", () => {
       // Simulate load milestone completion (effects will run)
       await new Promise(resolve => setTimeout(resolve, 10));
 
+      // Enable fake timers now that the initial load timer has fired
+      vi.useFakeTimers();
+
       // 2. Render with loaded milestones
       resetHooks();
       tree = Dashboard();
@@ -375,7 +378,8 @@ describe("Next.js Application & Configuration Suite", () => {
       resetHooks();
       tree = Dashboard();
 
-      // 3. Traverse JSX tree and call all handlers (onClick, onSubmit)
+      // 3. Traverse JSX tree and call all handlers (onClick, onSubmit, onChange)
+      let useEmptyInputs = false;
       const traverseAndCallHandlers = async (element: any) => {
         if (!element) return;
         
@@ -388,6 +392,21 @@ describe("Next.js Application & Configuration Suite", () => {
           if (typeof element.props.onSubmit === "function") {
             try {
               await element.props.onSubmit({ preventDefault: () => {} });
+            } catch {}
+          }
+          if (typeof element.props.onChange === "function") {
+            try {
+              let val = "";
+              if (!useEmptyInputs) {
+                if (element.props.type === "datetime-local") {
+                  val = "2026-06-06T12:00";
+                } else if (element.props.type === "number") {
+                  val = "1000";
+                } else {
+                  val = "test-value";
+                }
+              }
+              await element.props.onChange({ target: { value: val } });
             } catch {}
           }
           
@@ -403,19 +422,27 @@ describe("Next.js Application & Configuration Suite", () => {
         }
       };
 
+      useEmptyInputs = false;
       await traverseAndCallHandlers(tree);
+      vi.runAllTimers();
+
+      useEmptyInputs = true;
+      await traverseAndCallHandlers(tree);
+      vi.runAllTimers();
 
       // Render with released milestone selected to cover timeline settlement details
       hookStates[1] = milestonesState[2]; // selectedMilestone = m-released
       resetHooks();
       tree = Dashboard();
       await traverseAndCallHandlers(tree);
+      vi.runAllTimers();
 
       // Render with refunded milestone selected to cover refunded banner colors
       hookStates[1] = milestonesState[3]; // selectedMilestone = m-refunded
       resetHooks();
       tree = Dashboard();
       await traverseAndCallHandlers(tree);
+      vi.runAllTimers();
 
       // Render with selection that is no longer present in fetch data to cover (updated || data[0]) fallback
       vi.spyOn(global, "fetch").mockImplementation(async () => {
@@ -427,6 +454,7 @@ describe("Next.js Application & Configuration Suite", () => {
       resetHooks();
       tree = Dashboard();
       await traverseAndCallHandlers(tree);
+      vi.runAllTimers();
 
       // 4. Test API Failures in handlers (fetchMilestones catches, resolve/attest catches)
       vi.spyOn(global, "fetch").mockImplementation(async (_input: RequestInfo | URL) => {
@@ -441,12 +469,17 @@ describe("Next.js Application & Configuration Suite", () => {
       resetHooks();
       tree = Dashboard();
       await traverseAndCallHandlers(tree);
+      vi.runAllTimers();
 
       // Pass 2: seed fails to cover handleSeed catch block (line 76)
       vi.spyOn(global, "fetch").mockRejectedValue(new Error("Network Failure"));
       resetHooks();
       tree = Dashboard();
       await traverseAndCallHandlers(tree);
+      vi.runAllTimers();
+
+      // Restore real timers
+      vi.useRealTimers();
     });
 
     it("renders Dashboard with no milestones", async () => {

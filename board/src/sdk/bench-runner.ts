@@ -3,7 +3,8 @@ import { T3nClient, createEthAuthInput } from "./T3nClient";
 async function run() {
   const durations: number[] = [];
 
-  for (let i = 0; i < 200; i++) {
+  const runs = process.env.NODE_ENV === "test" ? 1 : (process.env.BENCH_RUNS ? parseInt(process.env.BENCH_RUNS) : 200);
+  for (let i = 0; i < runs; i++) {
     T3nClient.clearStore();
     const client = new T3nClient();
     

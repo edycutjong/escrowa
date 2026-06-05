@@ -270,6 +270,27 @@ describe("Next.js Application & Configuration Suite", () => {
       const data = await res.json();
       expect(data.success).toBe(true);
     });
+
+    it("seed POST - already exists error", async () => {
+      const originalExecute = T3nClient.prototype.executeAndDecode;
+      T3nClient.prototype.executeAndDecode = vi.fn().mockRejectedValue(new Error("Milestone already exists"));
+      
+      const res = await seedPOST();
+      const data = await res.json();
+      expect(data.success).toBe(true);
+      expect(data.message).toBe("Already seeded (ignoring error)");
+      
+      T3nClient.prototype.executeAndDecode = originalExecute;
+    });
+
+    it("seed POST - unknown error", async () => {
+      const originalExecute = T3nClient.prototype.executeAndDecode;
+      T3nClient.prototype.executeAndDecode = vi.fn().mockRejectedValue(new Error("Unknown failure"));
+      
+      await expect(seedPOST()).rejects.toThrow("Unknown failure");
+      
+      T3nClient.prototype.executeAndDecode = originalExecute;
+    });
   });
 
   describe("Dashboard Component (page.tsx)", () => {

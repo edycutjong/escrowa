@@ -3,7 +3,11 @@ wit_bindgen::generate!({
     world: "escrow",
 });
 
+#[cfg(not(test))]
 use crate::t3n::escrow::host;
+
+#[cfg(test)]
+pub use mock_host as host;
 use serde::{Deserialize, Serialize};
 
 struct Component;
@@ -304,3 +308,536 @@ fn sha256(s: &str) -> String {
 }
 
 export!(Component);
+
+#[cfg(test)]
+pub mod mock_host {
+    use std::cell::RefCell;
+    use std::collections::HashMap;
+
+    thread_local! {
+        static KV: RefCell<HashMap<(String, String), String>> = RefCell::new(HashMap::new());
+        static OUTBOX_RESPONSE: RefCell<Option<String>> = RefCell::new(None);
+    }
+
+    pub fn reset() {
+        KV.with(|kv| kv.borrow_mut().clear());
+        OUTBOX_RESPONSE.with(|r| *r.borrow_mut() = None);
+    }
+
+    pub fn set_outbox_response(response: String) {
+        OUTBOX_RESPONSE.with(|r| *r.borrow_mut() = Some(response));
+    }
+
+    pub fn kv_get(namespace: &str, key: &str) -> Result<String, String> {
+        KV.with(|kv| {
+            kv.borrow()
+                .get(&(namespace.to_string(), key.to_string()))
+                .cloned()
+                .ok_or_else(|| "Not found".to_string())
+        })
+    }
+
+    pub fn kv_set(namespace: &str, key: &str, value: &str) -> Result<String, String> {
+        KV.with(|kv| {
+            kv.borrow_mut()
+                .insert((namespace.to_string(), key.to_string()), value.to_string());
+            Ok(value.to_string())
+        })
+    }
+
+    pub fn sign_secp256k1(wallet_address: &str, message_hash: &str) -> Result<String, String> {
+        Ok(format!("sig_{}_{}", wallet_address, message_hash))
+    }
+
+    pub fn outbox_post(_url: &str, _body: &str, _idempotency_key: &str) -> Result<String, String> {
+        OUTBOX_RESPONSE.with(|r| {
+            if let Some(ref resp) = *r.borrow() {
+                Ok(resp.clone())
+            } else {
+                Ok(r#"{"settlementRef": "mock_ref_123", "teeProof": "mock_proof_456"}"#.to_string())
+            }
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn call_dispatch(func: &str, input: &str) -> Result<String, String> {
+        let input_struct = ContractInput {
+            function_name: func.to_string(),
+            input_json: input.to_string(),
+        };
+        match <Component as Guest>::dispatch(input_struct) {
+            Ok(out) => Ok(out.output_json),
+            Err(ContractError::Err(e)) => Err(e),
+        }
+    }
+
+    #[test]
+    fn test_unknown_function() {
+        mock_host::reset();
+        let res = call_dispatch("unknown-func", "{}");
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), "Unknown function: unknown-func");
+    }
+
+    #[test]
+    fn test_create_milestone_success() {
+        mock_host::reset();
+        let input = r#"{
+            "id": "m1",
+            "client": "did:t3n:client1",
+            "freelancer": "did:t3n:freelancer1",
+            "amount": 1250.0,
+            "conditions": {
+                "requireDelivered": true,
+                "requireApproved": true,
+                "deadline": 1717675200,
+                "arbiter": "did:t3n:arbiter1"
+            },
+            "status": "",
+            "attestations": [],
+            "settlementRef": null,
+            "teeProof": null
+        }"#;
+
+        let res = call_dispatch("create-milestone", input).unwrap();
+        let m: Milestone = serde_json::from_str(&res).unwrap();
+        assert_eq!(m.id, "m1");
+        assert_eq!(m.status, "funded");
+        assert_eq!(m.amount, 1250.0);
+
+        // Verify it was stored in KV
+        let stored = mock_host::kv_get("milestones", "m1").unwrap();
+        let m_stored: Milestone = serde_json::from_str(&stored).unwrap();
+        assert_eq!(m_stored.id, "m1");
+    }
+
+    #[test]
+    fn test_create_milestone_already_exists() {
+        mock_host::reset();
+        let input = r#"{
+            "id": "m1",
+            "client": "did:t3n:client",
+            "freelancer": "did:t3n:freelancer",
+            "amount": 100.0,
+            "conditions": {
+                "requireDelivered": false,
+                "requireApproved": false
+            },
+            "status": "",
+            "attestations": []
+        }"#;
+
+        // First creation succeeds
+        assert!(call_dispatch("create-milestone", input).is_ok());
+
+        // Second creation fails
+        let err = call_dispatch("create-milestone", input).unwrap_err();
+        assert_eq!(err, "Milestone m1 already exists");
+    }
+
+    #[test]
+    fn test_create_milestone_invalid_json() {
+        mock_host::reset();
+        let err = call_dispatch("create-milestone", "invalid-json").unwrap_err();
+        assert!(err.contains("Failed to parse"));
+    }
+
+    #[test]
+    fn test_submit_attestation_flow() {
+        mock_host::reset();
+        
+        // 1. Create milestone
+        let init_json = r#"{
+            "id": "m-flow",
+            "client": "did:t3n:client",
+            "freelancer": "did:t3n:freelancer",
+            "amount": 500.0,
+            "conditions": {
+                "requireDelivered": true,
+                "requireApproved": true
+            },
+            "status": "",
+            "attestations": [],
+            "settlementRef": null,
+            "teeProof": null
+        }"#;
+        call_dispatch("create-milestone", init_json).unwrap();
+
+        // 2. Submit "delivered" attestation from freelancer
+        let att1 = r#"{
+            "milestoneId": "m-flow",
+            "by": "did:t3n:freelancer",
+            "kind": "delivered",
+            "sig": "sig_del_123",
+            "ts": 1717500000
+        }"#;
+        let res1 = call_dispatch("submit-attestation", att1).unwrap();
+        let m1: Milestone = serde_json::from_str(&res1).unwrap();
+        assert_eq!(m1.status, "delivered");
+        assert_eq!(m1.attestations.len(), 1);
+
+        // Try submitting same attestation again (should fail)
+        let err_dup = call_dispatch("submit-attestation", att1).unwrap_err();
+        assert!(err_dup.contains("already submitted"));
+
+        // 3. Submit "approved" attestation from client -> triggers release
+        let att2 = r#"{
+            "milestoneId": "m-flow",
+            "by": "did:t3n:client",
+            "kind": "approved",
+            "sig": "sig_app_456",
+            "ts": 1717500100
+        }"#;
+        let res2 = call_dispatch("submit-attestation", att2).unwrap();
+        let m2: Milestone = serde_json::from_str(&res2).unwrap();
+        assert_eq!(m2.status, "released");
+        assert_eq!(m2.attestations.len(), 2);
+        assert_eq!(m2.settlement_ref, Some("mock_ref_123".to_string()));
+        assert_eq!(m2.tee_proof, Some("mock_proof_456".to_string()));
+
+        // Try submitting attestation to already settled milestone (should fail)
+        let err_settled = call_dispatch("submit-attestation", att2).unwrap_err();
+        assert!(err_settled.contains("already settled"));
+    }
+
+    #[test]
+    fn test_submit_attestation_not_found() {
+        mock_host::reset();
+        let att = r#"{
+            "milestoneId": "m-nonexistent",
+            "by": "did:t3n:client",
+            "kind": "approved",
+            "sig": "sig_1",
+            "ts": 1717500000
+        }"#;
+        let err = call_dispatch("submit-attestation", att).unwrap_err();
+        assert_eq!(err, "Milestone m-nonexistent not found");
+    }
+
+    #[test]
+    fn test_submit_attestation_invalid_json() {
+        mock_host::reset();
+        let err = call_dispatch("submit-attestation", "invalid-json").unwrap_err();
+        assert!(err.contains("Failed to parse"));
+    }
+
+    #[test]
+    fn test_resolve_milestone_arbiter_release() {
+        mock_host::reset();
+        
+        let init_json = r#"{
+            "id": "m-arbiter",
+            "client": "did:t3n:client",
+            "freelancer": "did:t3n:freelancer",
+            "amount": 250.0,
+            "conditions": {
+                "requireDelivered": true,
+                "requireApproved": true,
+                "arbiter": "did:t3n:arbiter"
+            },
+            "status": "",
+            "attestations": [],
+            "settlementRef": null,
+            "teeProof": null
+        }"#;
+        call_dispatch("create-milestone", init_json).unwrap();
+
+        // 1. Resolve with correct arbiter -> release
+        let resolve_req = r#"{
+            "milestoneId": "m-arbiter",
+            "by": "did:t3n:arbiter",
+            "action": "release"
+        }"#;
+        let res = call_dispatch("resolve-milestone", resolve_req).unwrap();
+        let m: Milestone = serde_json::from_str(&res).unwrap();
+        assert_eq!(m.status, "released");
+        assert_eq!(m.settlement_ref, Some("mock_ref_123".to_string()));
+
+        // 2. Trying to resolve again fails
+        let err = call_dispatch("resolve-milestone", resolve_req).unwrap_err();
+        assert!(err.contains("already settled"));
+    }
+
+    #[test]
+    fn test_resolve_milestone_arbiter_refund() {
+        mock_host::reset();
+        
+        let init_json = r#"{
+            "id": "m-arbiter-refund",
+            "client": "did:t3n:client",
+            "freelancer": "did:t3n:freelancer",
+            "amount": 250.0,
+            "conditions": {
+                "requireDelivered": true,
+                "requireApproved": true,
+                "arbiter": "did:t3n:arbiter"
+            },
+            "status": "",
+            "attestations": [],
+            "settlementRef": null,
+            "teeProof": null
+        }"#;
+        call_dispatch("create-milestone", init_json).unwrap();
+
+        // Resolve with correct arbiter -> refund
+        let resolve_req = r#"{
+            "milestoneId": "m-arbiter-refund",
+            "by": "did:t3n:arbiter",
+            "action": "refund"
+        }"#;
+        let res = call_dispatch("resolve-milestone", resolve_req).unwrap();
+        let m: Milestone = serde_json::from_str(&res).unwrap();
+        assert_eq!(m.status, "refunded");
+        assert_eq!(m.settlement_ref, Some("mock_ref_123".to_string()));
+    }
+
+    #[test]
+    fn test_resolve_milestone_unauthorized_arbiter() {
+        mock_host::reset();
+        
+        let init_json = r#"{
+            "id": "m-arbiter-unauth",
+            "client": "did:t3n:client",
+            "freelancer": "did:t3n:freelancer",
+            "amount": 250.0,
+            "conditions": {
+                "requireDelivered": true,
+                "requireApproved": true,
+                "arbiter": "did:t3n:arbiter"
+            },
+            "status": "",
+            "attestations": [],
+            "settlementRef": null,
+            "teeProof": null
+        }"#;
+        call_dispatch("create-milestone", init_json).unwrap();
+
+        let resolve_req = r#"{
+            "milestoneId": "m-arbiter-unauth",
+            "by": "did:t3n:someone-else",
+            "action": "release"
+        }"#;
+        let err = call_dispatch("resolve-milestone", resolve_req).unwrap_err();
+        assert_eq!(err, "Resolution must be requested by the configured arbiter");
+    }
+
+    #[test]
+    fn test_resolve_milestone_no_arbiter_configured() {
+        mock_host::reset();
+        
+        let init_json = r#"{
+            "id": "m-no-arbiter",
+            "client": "did:t3n:client",
+            "freelancer": "did:t3n:freelancer",
+            "amount": 250.0,
+            "conditions": {
+                "requireDelivered": true,
+                "requireApproved": true
+            },
+            "status": "",
+            "attestations": [],
+            "settlementRef": null,
+            "teeProof": null
+        }"#;
+        call_dispatch("create-milestone", init_json).unwrap();
+
+        let resolve_req = r#"{
+            "milestoneId": "m-no-arbiter",
+            "by": "did:t3n:arbiter",
+            "action": "release"
+        }"#;
+        let err = call_dispatch("resolve-milestone", resolve_req).unwrap_err();
+        assert_eq!(err, "No arbiter configured for this milestone");
+    }
+
+    #[test]
+    fn test_resolve_milestone_deadline_release() {
+        mock_host::reset();
+        
+        let init_json = r#"{
+            "id": "m-deadline",
+            "client": "did:t3n:client",
+            "freelancer": "did:t3n:freelancer",
+            "amount": 100.0,
+            "conditions": {
+                "requireDelivered": true,
+                "requireApproved": true,
+                "deadline": 1717675200
+            },
+            "status": "",
+            "attestations": [],
+            "settlementRef": null,
+            "teeProof": null
+        }"#;
+        call_dispatch("create-milestone", init_json).unwrap();
+
+        let resolve_req = r#"{
+            "milestoneId": "m-deadline",
+            "by": "deadline",
+            "action": "release"
+        }"#;
+        let res = call_dispatch("resolve-milestone", resolve_req).unwrap();
+        let m: Milestone = serde_json::from_str(&res).unwrap();
+        assert_eq!(m.status, "released");
+    }
+
+    #[test]
+    fn test_resolve_milestone_deadline_refund() {
+        mock_host::reset();
+        
+        let init_json = r#"{
+            "id": "m-deadline-refund",
+            "client": "did:t3n:client",
+            "freelancer": "did:t3n:freelancer",
+            "amount": 100.0,
+            "conditions": {
+                "requireDelivered": true,
+                "requireApproved": true,
+                "deadline": 1717675200
+            },
+            "status": "",
+            "attestations": [],
+            "settlementRef": null,
+            "teeProof": null
+        }"#;
+        call_dispatch("create-milestone", init_json).unwrap();
+
+        let resolve_req = r#"{
+            "milestoneId": "m-deadline-refund",
+            "by": "deadline",
+            "action": "refund"
+        }"#;
+        let res = call_dispatch("resolve-milestone", resolve_req).unwrap();
+        let m: Milestone = serde_json::from_str(&res).unwrap();
+        assert_eq!(m.status, "refunded");
+    }
+
+    #[test]
+    fn test_resolve_milestone_no_deadline_configured() {
+        mock_host::reset();
+        
+        let init_json = r#"{
+            "id": "m-no-deadline",
+            "client": "did:t3n:client",
+            "freelancer": "did:t3n:freelancer",
+            "amount": 100.0,
+            "conditions": {
+                "requireDelivered": true,
+                "requireApproved": true
+            },
+            "status": "",
+            "attestations": [],
+            "settlementRef": null,
+            "teeProof": null
+        }"#;
+        call_dispatch("create-milestone", init_json).unwrap();
+
+        let resolve_req = r#"{
+            "milestoneId": "m-no-deadline",
+            "by": "deadline",
+            "action": "release"
+        }"#;
+        let err = call_dispatch("resolve-milestone", resolve_req).unwrap_err();
+        assert_eq!(err, "No deadline configured for this milestone");
+    }
+
+    #[test]
+    fn test_resolve_milestone_invalid_action() {
+        mock_host::reset();
+        
+        let init_json = r#"{
+            "id": "m-invalid-action",
+            "client": "did:t3n:client",
+            "freelancer": "did:t3n:freelancer",
+            "amount": 100.0,
+            "conditions": {
+                "requireDelivered": true,
+                "requireApproved": true,
+                "deadline": 1717675200,
+                "arbiter": "did:t3n:arbiter"
+            },
+            "status": "",
+            "attestations": [],
+            "settlementRef": null,
+            "teeProof": null
+        }"#;
+        call_dispatch("create-milestone", init_json).unwrap();
+
+        // Invalid deadline action
+        let resolve_req1 = r#"{
+            "milestoneId": "m-invalid-action",
+            "by": "deadline",
+            "action": "invalid-action"
+        }"#;
+        let err1 = call_dispatch("resolve-milestone", resolve_req1).unwrap_err();
+        assert!(err1.contains("Invalid action"));
+
+        // Invalid arbiter action
+        let resolve_req2 = r#"{
+            "milestoneId": "m-invalid-action",
+            "by": "did:t3n:arbiter",
+            "action": "invalid-action"
+        }"#;
+        let err2 = call_dispatch("resolve-milestone", resolve_req2).unwrap_err();
+        assert!(err2.contains("Invalid action"));
+    }
+
+    #[test]
+    fn test_resolve_milestone_not_found() {
+        mock_host::reset();
+        let resolve_req = r#"{
+            "milestoneId": "m-nonexistent",
+            "by": "deadline",
+            "action": "release"
+        }"#;
+        let err = call_dispatch("resolve-milestone", resolve_req).unwrap_err();
+        assert_eq!(err, "Milestone m-nonexistent not found");
+    }
+
+    #[test]
+    fn test_resolve_milestone_invalid_json() {
+        mock_host::reset();
+        let err = call_dispatch("resolve-milestone", "invalid-json").unwrap_err();
+        assert!(err.contains("Failed to parse"));
+    }
+
+    #[test]
+    fn test_outbox_payout_alternative_format() {
+        mock_host::reset();
+        
+        let init_json = r#"{
+            "id": "m-alt",
+            "client": "did:t3n:client",
+            "freelancer": "did:t3n:freelancer",
+            "amount": 100.0,
+            "conditions": {
+                "requireDelivered": true,
+                "requireApproved": true,
+                "arbiter": "did:t3n:arbiter"
+            },
+            "status": "",
+            "attestations": []
+        }"#;
+        
+        // Create milestone
+        call_dispatch("create-milestone", init_json).unwrap();
+        
+        // Let's set custom outbox response that is not standard JSON
+        mock_host::set_outbox_response("non-json-string".to_string());
+        
+        let resolve_req = r#"{
+            "milestoneId": "m-alt",
+            "by": "did:t3n:arbiter",
+            "action": "release"
+        }"#;
+        let res = call_dispatch("resolve-milestone", resolve_req).unwrap();
+        let m: Milestone = serde_json::from_str(&res).unwrap();
+        assert_eq!(m.status, "released");
+        // Should fallback to sha256 generation
+        assert!(m.settlement_ref.unwrap().starts_with("tx_0x"));
+    }
+}

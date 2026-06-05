@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { ethers } from "ethers";
+
 
 // In-memory KV store for the WASM contract
 const kvStore = new Map<string, string>();

@@ -140,7 +140,7 @@ export class T3nClient {
       };
     }
 
-    let result;
+    let result: any;
     try {
       result = dispatch({
         functionName: params.function_name,

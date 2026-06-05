@@ -1,7 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { T3nClient, createEthAuthInput, Milestone } from "./T3nClient";
-import { clearStore } from "../wasm/host";
+import { T3nClient, createEthAuthInput } from "./T3nClient";
+import { clearStore, signSecp256k1, issueSdJwt, httpPostPlaceholder, outboxPost, kvGet, kvSet } from "../wasm/host";
+
+let mockDispatch: any = null;
+
+vi.mock("../wasm/escrow_contract.js", async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    dispatch: (args: any) => {
+      if (mockDispatch) {
+        return mockDispatch(args);
+      }
+      return actual.dispatch(args);
+    }
+  };
+});
 
 describe("Escrowa TEE Agent & Contract Test Suite (115+ Assertions)", () => {
   let client: T3nClient;
@@ -16,7 +31,7 @@ describe("Escrowa TEE Agent & Contract Test Suite (115+ Assertions)", () => {
 
     client = new T3nClient();
 
-    vi.spyOn(global, "fetch").mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input: RequestInfo | URL, _init?: RequestInit) => {
       const url = input.toString();
       
       if (url.endsWith("/handshake") || url.endsWith("/authenticate") || url.endsWith("/tenant/claim")) {
@@ -29,6 +44,7 @@ describe("Escrowa TEE Agent & Contract Test Suite (115+ Assertions)", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    mockDispatch = null;
   });
 
   describe("Security & Key Custody Guards (Mandatory)", () => {
@@ -451,6 +467,301 @@ describe("Escrowa TEE Agent & Contract Test Suite (115+ Assertions)", () => {
         expect(m.amount).toBe(amount);
         expect(m.status).toBe("funded");
       }
+    });
+  });
+
+  describe("Coverage Enhancements (Additional Edge Cases)", () => {
+    it("covers constructor warn fallback and custom apiKey passing", () => {
+      const originalApiKey = process.env.T3_API_KEY;
+      const originalPublicApiKey = process.env.NEXT_PUBLIC_T3_API_KEY;
+      
+      delete process.env.T3_API_KEY;
+      delete process.env.NEXT_PUBLIC_T3_API_KEY;
+
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      new T3nClient();
+      expect(warnSpy).toHaveBeenCalledWith("T3_API_KEY is not set in environment variables");
+      warnSpy.mockRestore();
+
+      // Clean restore
+      if (originalApiKey) process.env.T3_API_KEY = originalApiKey;
+      if (originalPublicApiKey) process.env.NEXT_PUBLIC_T3_API_KEY = originalPublicApiKey;
+
+      const client2 = new T3nClient({ apiKey: "explicit-key" });
+      expect((client2 as any).apiKey).toBe("explicit-key");
+    });
+
+    it("covers tenant.me and contracts.register", async () => {
+      const clientNoAuth = new T3nClient();
+      const meNoAuth = await clientNoAuth.tenant.me();
+      expect(meNoAuth.authenticated).toBe(false);
+
+      await client.handshake();
+      await client.authenticate(createEthAuthInput("0x1111"));
+      const meAuth = await client.tenant.me();
+      expect(meAuth.authenticated).toBe(true);
+
+      const reg = await client.contracts.register({ tail: "test-tail", version: "1.0", wasm: {} });
+      expect(reg.success).toBe(true);
+      expect(reg.contract_id).toBe(1001);
+    });
+
+    it("successfully claims tenant (fetch success path)", async () => {
+      await client.handshake();
+      const res = await client.tenant.claim();
+      expect(res.success).toBe(true);
+      expect(res.did).toBe("did:t3n:tenant");
+    });
+
+    it("covers getAllMilestones and syncCache populated flow", async () => {
+      await client.handshake();
+      await client.authenticate(createEthAuthInput("0x1111"));
+      
+      await client.executeAndDecode({
+        script_name: "z:tenant:escrow",
+        script_version: "1.0.0",
+        function_name: "create-milestone",
+        input: {
+          id: "m-all-milestones-test",
+          client: clientDid,
+          freelancer: freelancerDid,
+          amount: 500,
+          conditions: { requireDelivered: true, requireApproved: true },
+        },
+      });
+
+      const list = T3nClient.getAllMilestones();
+      expect(list.some(m => m.id === "m-all-milestones-test")).toBe(true);
+    });
+
+    it("covers create-milestone branch logic when inputs are provided", async () => {
+      await client.handshake();
+      await client.authenticate(createEthAuthInput("0x1111"));
+
+      const milestone = await client.executeAndDecode({
+        script_name: "z:tenant:escrow",
+        script_version: "1.0.0",
+        function_name: "create-milestone",
+        input: {
+          id: "m-branch-test",
+          client: clientDid,
+          freelancer: freelancerDid,
+          amount: 100,
+          conditions: { requireDelivered: true, requireApproved: true },
+          status: "funded",
+          attestations: [],
+          settlementRef: "ref",
+          teeProof: "proof",
+        },
+      });
+
+      expect(milestone.id).toBe("m-branch-test");
+      expect(milestone.settlementRef).toBe("ref");
+      expect(milestone.teeProof).toBe("proof");
+    });
+
+    describe("Fetch catches and errors", () => {
+      it("catches errors in handshake", async () => {
+        vi.spyOn(global, "fetch").mockRejectedValueOnce(new Error("Handshake failed"));
+        const clientErr = new T3nClient();
+        const res = await clientErr.handshake();
+        expect(res.success).toBe(true);
+      });
+
+      it("catches errors in authenticate", async () => {
+        vi.spyOn(global, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+          if (input.toString().endsWith("/handshake")) {
+            return new Response(JSON.stringify({ success: true }), { status: 200 });
+          }
+          throw new Error("Authenticate failed");
+        });
+        const clientErr = new T3nClient();
+        await clientErr.handshake();
+        const res = await clientErr.authenticate(createEthAuthInput("0x1111"));
+        expect(res.success).toBe(true);
+      });
+
+      it("catches errors in tenant.claim", async () => {
+        vi.spyOn(global, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+          if (input.toString().endsWith("/handshake")) {
+            return new Response(JSON.stringify({ success: true }), { status: 200 });
+          }
+          if (input.toString().endsWith("/authenticate")) {
+            return new Response(JSON.stringify({ success: true }), { status: 200 });
+          }
+          throw new Error("Claim failed");
+        });
+        const clientErr = new T3nClient();
+        await clientErr.handshake();
+        await clientErr.authenticate(createEthAuthInput("0x1111"));
+        const res = await clientErr.tenant.claim();
+        expect(res.success).toBe(true);
+      });
+    });
+
+    describe("executeAndDecode error branches via mockDispatch", () => {
+      beforeEach(async () => {
+        await client.handshake();
+        await client.authenticate(createEthAuthInput("0x1111"));
+      });
+
+      it("handles standard error thrown by dispatch", async () => {
+        mockDispatch = () => {
+          throw new Error("Dispatch Error");
+        };
+        await expect(
+          client.executeAndDecode({
+            script_name: "z:tenant:escrow",
+            script_version: "1.0.0",
+            function_name: "create-milestone",
+            input: {},
+          })
+        ).rejects.toThrow("Dispatch Error");
+      });
+
+      it("handles object error with payload as object thrown by dispatch", async () => {
+        mockDispatch = () => {
+          throw { payload: { detail: "Detailed payload" } };
+        };
+        await expect(
+          client.executeAndDecode({
+            script_name: "z:tenant:escrow",
+            script_version: "1.0.0",
+            function_name: "create-milestone",
+            input: {},
+          })
+        ).rejects.toThrow('{"detail":"Detailed payload"}');
+      });
+
+      it("handles object error with payload as string thrown by dispatch", async () => {
+        mockDispatch = () => {
+          throw { payload: "string-payload" };
+        };
+        await expect(
+          client.executeAndDecode({
+            script_name: "z:tenant:escrow",
+            script_version: "1.0.0",
+            function_name: "create-milestone",
+            input: {},
+          })
+        ).rejects.toThrow("string-payload");
+      });
+
+      it("handles string error thrown by dispatch", async () => {
+        mockDispatch = () => {
+          throw "Simple string error";
+        };
+        await expect(
+          client.executeAndDecode({
+            script_name: "z:tenant:escrow",
+            script_version: "1.0.0",
+            function_name: "create-milestone",
+            input: {},
+          })
+        ).rejects.toThrow("Simple string error");
+      });
+
+      it("handles result.tag === 'err'", async () => {
+        mockDispatch = () => {
+          return { tag: "err", val: "mock-contract-error" };
+        };
+        await expect(
+          client.executeAndDecode({
+            script_name: "z:tenant:escrow",
+            script_version: "1.0.0",
+            function_name: "create-milestone",
+            input: {},
+          })
+        ).rejects.toThrow("mock-contract-error");
+      });
+
+      it("handles invalid/empty outputJson from dispatch", async () => {
+        mockDispatch = () => {
+          return { tag: "ok", val: {} };
+        };
+        await expect(
+          client.executeAndDecode({
+            script_name: "z:tenant:escrow",
+            script_version: "1.0.0",
+            function_name: "create-milestone",
+            input: {},
+          })
+        ).rejects.toThrow("Invalid output from WASM module");
+      });
+    });
+
+    it("uses NEXT_PUBLIC_T3_API_KEY if T3_API_KEY is not set", () => {
+      const originalApiKey = process.env.T3_API_KEY;
+      const originalPublicApiKey = process.env.NEXT_PUBLIC_T3_API_KEY;
+      
+      delete process.env.T3_API_KEY;
+      process.env.NEXT_PUBLIC_T3_API_KEY = "public-key";
+
+      const client = new T3nClient();
+      expect((client as any).apiKey).toBe("public-key");
+
+      // Clean restore
+      if (originalApiKey) process.env.T3_API_KEY = originalApiKey;
+      else delete process.env.T3_API_KEY;
+      if (originalPublicApiKey) process.env.NEXT_PUBLIC_T3_API_KEY = originalPublicApiKey;
+      else delete process.env.NEXT_PUBLIC_T3_API_KEY;
+    });
+
+    it("Rejects executeAndDecode when handshake is done but not authenticated", async () => {
+      const clientAuth = new T3nClient();
+      await clientAuth.handshake();
+      await expect(
+        clientAuth.executeAndDecode({
+          script_name: "z:tenant:escrow",
+          script_version: "1.0.0",
+          function_name: "create-milestone",
+          input: {},
+        })
+      ).rejects.toThrow("Client not authenticated");
+    });
+
+    describe("executeAndDecode null and empty payload errors", () => {
+      beforeEach(async () => {
+        await client.handshake();
+        await client.authenticate(createEthAuthInput("0x1111"));
+      });
+
+      it("handles null/undefined error thrown by dispatch", async () => {
+        mockDispatch = () => {
+          throw null;
+        };
+        await expect(
+          client.executeAndDecode({
+            script_name: "z:tenant:escrow",
+            script_version: "1.0.0",
+            function_name: "create-milestone",
+            input: {},
+          })
+        ).rejects.toThrow("null");
+      });
+    });
+
+    describe("wasm/host.ts coverage", () => {
+      it("covers signSecp256k1 error handling", () => {
+        expect(() => signSecp256k1(undefined as any, "hash")).toThrow("Signing error");
+      });
+
+      it("covers issueSdJwt and httpPostPlaceholder", () => {
+        expect(issueSdJwt("")).toBe("sd_jwt_mock");
+        expect(httpPostPlaceholder("", "", "")).toBe("http_post_mock");
+      });
+
+      it("covers kvGet and kvSet directly", () => {
+        kvSet("ns", "key", "val");
+        expect(kvGet("ns", "key")).toBe("val");
+        expect(() => kvGet("ns", "nonexistent")).toThrow("Key not found");
+      });
+
+      it("covers outboxPost fallback logic when signature and milestoneId are missing", () => {
+        const res = outboxPost("url", JSON.stringify({}), "idemp");
+        const parsed = JSON.parse(res);
+        expect(parsed.teeProof).toBe("tee_proof_");
+      });
     });
   });
 });

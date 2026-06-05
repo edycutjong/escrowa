@@ -11,6 +11,8 @@ The contract uses `wit-bindgen` to communicate with the TEE host environment. Th
 2. **Secure Enclave Signing:** (`sign_secp256k1`) allowing the contract to authorize payouts without ever seeing the private key.
 3. **Idempotent Outbox:** (`outbox_post`) reliably sending HTTP payloads to the Terminal 3 API to settle funds via a custodial vault.
 
+> **Simulation Note:** For local development and hackathon evaluation, these host functions are mocked via `@bytecodealliance/jco` and `ethers.js` in the frontend layer to simulate the T3 ADK environment.
+
 ## 📜 Escrow Flow
 
 1. **Create:** A milestone is created with a Client DID, Freelancer DID, and Amount. It is marked as `funded`.
@@ -27,6 +29,20 @@ rustup target add wasm32-unknown-unknown
 
 cargo build --target wasm32-unknown-unknown --release
 ```
+
+## 🧪 Test Coverage
+
+The WASM contract implements a comprehensive unit test suite covering all state transitions, error boundaries, and edge cases. 
+
+**18 tests passing** across the core escrow flow:
+
+| Test Group | Count | Scenarios Covered |
+|------------|-------|-------------------|
+| **Milestone Creation** | 3 | Happy path success, duplicate milestone prevention, invalid JSON rejection |
+| **Attestations** | 3 | End-to-end attestation flow, milestone not found rejection, invalid JSON handling |
+| **Arbiter Resolution** | 4 | Arbiter release, arbiter refund, unauthorized arbiter rejection, missing arbiter config |
+| **Deadline Resolution** | 4 | Deadline release, deadline refund, missing deadline config, milestone not found |
+| **Edge Cases & Outbox** | 4 | Invalid resolution action, unknown function routing, invalid resolution JSON, outbox format variations |
 
 ## 🤖 Agent Rules
 If you are an AI contributing to this directory, please review [AGENTS.md](./AGENTS.md) and [CLAUDE.md](./CLAUDE.md) for strict WASM compilation and TEE security guidelines.

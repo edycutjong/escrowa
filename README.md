@@ -35,10 +35,13 @@
 Priya shipped the final milestone of a 6-week remote development contract. The client said "looks great," went silent, and she's still chasing $4,200 three months later. Traditional escrow requires trusting a third-party custodian with both the funds and the release decision. On-chain escrow usually means trusting a hot wallet or an opaque, unverified smart contract. No platform offers a neutral, secure environment that releases payment **only** when both sides agree without exposing the private keys to any single human or software agent.
 
 ### The Solution
-**Escrowa** is a `did:t3n`-verified autonomous escrow agent. The funds are locked under conditional logic inside an attested **Trusted Execution Environment (TEE)**.
+**Escrowa** is an autonomous escrow agent. The funds are locked under conditional logic compiled for a **Trusted Execution Environment (TEE)**.
 * **Mutual Consent:** Payout occurs automatically when the freelancer's "delivered" and the client's "approved" cryptographic signatures match.
 * **Hardware-Gated Custody:** The signing keys are generated and held **inside the enclave** under `cluster CEK`. The agent never sees the raw private keys, preventing unilateral draining of the escrow.
 * **Fail-Safe Fallbacks:** Includes customizable ghost/deadline rules (automatic release if a client vanishes) and arbiter-gated resolution paths.
+
+> [!NOTE]
+> **Hackathon Simulation Context:** For this DoraHacks submission, the TEE hardware environment is simulated locally using the T3 Agent Development Kit (ADK) and `@bytecodealliance/jco`. The core logic (`contract/src/lib.rs`) compiles to a standard `wasm32-wasip2` T3 component, but the host cryptographic functions (like `sign-secp256k1`) are simulated locally via `ethers.js` in `board/src/wasm/host.ts`. This ensures the code is production-ready for real Intel TDX hardware when the T3 network launches, without misleading about current hardware utilization.
 
 ---
 

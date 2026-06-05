@@ -77,8 +77,8 @@ fn create_milestone(input_json: &str) -> Result<String, String> {
     let mut milestone = milestone;
     milestone.status = "funded".to_string();
 
-    let value_json = serde_json::to_string(&milestone)
-        .map_err(|e| format!("Serialization error: {}", e))?;
+    let value_json =
+        serde_json::to_string(&milestone).map_err(|e| format!("Serialization error: {}", e))?;
 
     host::kv_set("milestones", &milestone.id, &value_json)
         .map_err(|e| format!("KV set error: {}", e))?;
@@ -130,8 +130,8 @@ fn submit_attestation(input_json: &str) -> Result<String, String> {
         trigger_release(&mut milestone)?;
     }
 
-    let value_json = serde_json::to_string(&milestone)
-        .map_err(|e| format!("Serialization error: {}", e))?;
+    let value_json =
+        serde_json::to_string(&milestone).map_err(|e| format!("Serialization error: {}", e))?;
 
     host::kv_set("milestones", &milestone.id, &value_json)
         .map_err(|e| format!("KV set error: {}", e))?;
@@ -144,7 +144,7 @@ fn resolve_milestone(input_json: &str) -> Result<String, String> {
     struct ResolveParams {
         #[serde(rename = "milestoneId")]
         milestone_id: String,
-        by: String, // "deadline" or DID of the arbiter
+        by: String,     // "deadline" or DID of the arbiter
         action: String, // "release" or "refund"
     }
 
@@ -163,20 +163,28 @@ fn resolve_milestone(input_json: &str) -> Result<String, String> {
 
     if params.by == "deadline" {
         // Verify deadline is defined and has passed
-        let _deadline = milestone.conditions.deadline
+        let _deadline = milestone
+            .conditions
+            .deadline
             .ok_or_else(|| "No deadline configured for this milestone".to_string())?;
-        
+
         // Trigger resolution
         if params.action == "release" {
             trigger_release(&mut milestone)?;
         } else if params.action == "refund" {
             trigger_refund(&mut milestone)?;
         } else {
-            return Err(format!("Invalid action for deadline resolution: {}", params.action));
+            return Err(format!(
+                "Invalid action for deadline resolution: {}",
+                params.action
+            ));
         }
     } else {
         // Must be arbiter
-        let arbiter_did = milestone.conditions.arbiter.clone()
+        let arbiter_did = milestone
+            .conditions
+            .arbiter
+            .clone()
             .ok_or_else(|| "No arbiter configured for this milestone".to_string())?;
 
         if params.by != arbiter_did {
@@ -188,12 +196,15 @@ fn resolve_milestone(input_json: &str) -> Result<String, String> {
         } else if params.action == "refund" {
             trigger_refund(&mut milestone)?;
         } else {
-            return Err(format!("Invalid action for arbiter resolution: {}", params.action));
+            return Err(format!(
+                "Invalid action for arbiter resolution: {}",
+                params.action
+            ));
         }
     }
 
-    let value_json = serde_json::to_string(&milestone)
-        .map_err(|e| format!("Serialization error: {}", e))?;
+    let value_json =
+        serde_json::to_string(&milestone).map_err(|e| format!("Serialization error: {}", e))?;
 
     host::kv_set("milestones", &milestone.id, &value_json)
         .map_err(|e| format!("KV set error: {}", e))?;
@@ -237,14 +248,13 @@ fn trigger_release(milestone: &mut Milestone) -> Result<(), String> {
         tee_proof: String,
     }
 
-    let res: PayoutResponse = serde_json::from_str(&response)
-        .unwrap_or_else(|_| {
-            // If response is not standard, generate deterministic fallback refs
-            PayoutResponse {
-                settlement_ref: format!("tx_0x{}", sha256(&format!("{}{}", message, signature))),
-                tee_proof: format!("tee_proof_{}", milestone.id),
-            }
-        });
+    let res: PayoutResponse = serde_json::from_str(&response).unwrap_or_else(|_| {
+        // If response is not standard, generate deterministic fallback refs
+        PayoutResponse {
+            settlement_ref: format!("tx_0x{}", sha256(&format!("{}{}", message, signature))),
+            tee_proof: format!("tee_proof_{}", milestone.id),
+        }
+    });
 
     milestone.status = "released".to_string();
     milestone.settlement_ref = Some(res.settlement_ref);
@@ -283,13 +293,10 @@ fn trigger_refund(milestone: &mut Milestone) -> Result<(), String> {
         tee_proof: String,
     }
 
-    let res: RefundResponse = serde_json::from_str(&response)
-        .unwrap_or_else(|_| {
-            RefundResponse {
-                settlement_ref: format!("tx_0x{}", sha256(&format!("{}{}", message, signature))),
-                tee_proof: format!("tee_proof_refund_{}", milestone.id),
-            }
-        });
+    let res: RefundResponse = serde_json::from_str(&response).unwrap_or_else(|_| RefundResponse {
+        settlement_ref: format!("tx_0x{}", sha256(&format!("{}{}", message, signature))),
+        tee_proof: format!("tee_proof_refund_{}", milestone.id),
+    });
 
     milestone.status = "refunded".to_string();
     milestone.settlement_ref = Some(res.settlement_ref);
@@ -354,7 +361,10 @@ pub mod mock_host {
             if let Some(ref resp) = *r.borrow() {
                 Ok(resp.clone())
             } else {
-                Ok(r#"{"settlementRef": "mock_ref_123", "teeProof": "mock_proof_456"}"#.to_string())
+                Ok(
+                    r#"{"settlementRef": "mock_ref_123", "teeProof": "mock_proof_456"}"#
+                        .to_string(),
+                )
             }
         })
     }
@@ -449,7 +459,7 @@ mod tests {
     #[test]
     fn test_submit_attestation_flow() {
         mock_host::reset();
-        
+
         // 1. Create milestone
         let init_json = r#"{
             "id": "m-flow",
@@ -528,7 +538,7 @@ mod tests {
     #[test]
     fn test_resolve_milestone_arbiter_release() {
         mock_host::reset();
-        
+
         let init_json = r#"{
             "id": "m-arbiter",
             "client": "did:t3n:client",
@@ -565,7 +575,7 @@ mod tests {
     #[test]
     fn test_resolve_milestone_arbiter_refund() {
         mock_host::reset();
-        
+
         let init_json = r#"{
             "id": "m-arbiter-refund",
             "client": "did:t3n:client",
@@ -598,7 +608,7 @@ mod tests {
     #[test]
     fn test_resolve_milestone_unauthorized_arbiter() {
         mock_host::reset();
-        
+
         let init_json = r#"{
             "id": "m-arbiter-unauth",
             "client": "did:t3n:client",
@@ -622,13 +632,16 @@ mod tests {
             "action": "release"
         }"#;
         let err = call_dispatch("resolve-milestone", resolve_req).unwrap_err();
-        assert_eq!(err, "Resolution must be requested by the configured arbiter");
+        assert_eq!(
+            err,
+            "Resolution must be requested by the configured arbiter"
+        );
     }
 
     #[test]
     fn test_resolve_milestone_no_arbiter_configured() {
         mock_host::reset();
-        
+
         let init_json = r#"{
             "id": "m-no-arbiter",
             "client": "did:t3n:client",
@@ -657,7 +670,7 @@ mod tests {
     #[test]
     fn test_resolve_milestone_deadline_release() {
         mock_host::reset();
-        
+
         let init_json = r#"{
             "id": "m-deadline",
             "client": "did:t3n:client",
@@ -688,7 +701,7 @@ mod tests {
     #[test]
     fn test_resolve_milestone_deadline_refund() {
         mock_host::reset();
-        
+
         let init_json = r#"{
             "id": "m-deadline-refund",
             "client": "did:t3n:client",
@@ -719,7 +732,7 @@ mod tests {
     #[test]
     fn test_resolve_milestone_no_deadline_configured() {
         mock_host::reset();
-        
+
         let init_json = r#"{
             "id": "m-no-deadline",
             "client": "did:t3n:client",
@@ -748,7 +761,7 @@ mod tests {
     #[test]
     fn test_resolve_milestone_invalid_action() {
         mock_host::reset();
-        
+
         let init_json = r#"{
             "id": "m-invalid-action",
             "client": "did:t3n:client",
@@ -808,7 +821,7 @@ mod tests {
     #[test]
     fn test_outbox_payout_alternative_format() {
         mock_host::reset();
-        
+
         let init_json = r#"{
             "id": "m-alt",
             "client": "did:t3n:client",
@@ -822,13 +835,13 @@ mod tests {
             "status": "",
             "attestations": []
         }"#;
-        
+
         // Create milestone
         call_dispatch("create-milestone", init_json).unwrap();
-        
+
         // Let's set custom outbox response that is not standard JSON
         mock_host::set_outbox_response("non-json-string".to_string());
-        
+
         let resolve_req = r#"{
             "milestoneId": "m-alt",
             "by": "did:t3n:arbiter",

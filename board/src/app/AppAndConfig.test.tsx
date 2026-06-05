@@ -49,6 +49,7 @@ vi.mock("react", async (importOriginal) => {
 // Static imports for target files
 import RootLayout, { metadata } from "./layout";
 import Dashboard from "./page";
+import NotFound from "./not-found";
 import { GET as milestonesGET, POST as milestonesPOST } from "./api/milestones/route";
 import { POST as attestPOST } from "./api/milestones/[id]/attest/route";
 import { POST as resolvePOST } from "./api/milestones/[id]/resolve/route";
@@ -130,6 +131,13 @@ describe("Next.js Application & Configuration Suite", () => {
     it("renders root layout", () => {
       expect(metadata.title).toBe("Escrowa — TEE-secured Autonomous Escrow Agent");
       const res = RootLayout({ children: "test-child" });
+      expect(res).toBeDefined();
+    });
+  });
+
+  describe("NotFound Component", () => {
+    it("renders NotFound page", () => {
+      const res = NotFound();
       expect(res).toBeDefined();
     });
   });

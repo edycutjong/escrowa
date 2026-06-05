@@ -3,7 +3,11 @@ import { ethers } from "ethers";
 
 
 // In-memory KV store for the WASM contract
-const kvStore = new Map<string, string>();
+// Use globalThis to persist the map across Next.js module reloading boundaries
+const kvStore = (globalThis as any).__kvStore || new Map<string, string>();
+if (!(globalThis as any).__kvStore) {
+  (globalThis as any).__kvStore = kvStore;
+}
 
 export function kvGet(namespace: string, key: string): string {
   const fullKey = `${namespace}:${key}`;

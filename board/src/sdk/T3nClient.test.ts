@@ -31,7 +31,7 @@ describe("Escrowa TEE Agent & Contract Test Suite (115+ Assertions)", () => {
 
     client = new T3nClient();
 
-    vi.spyOn(global, "fetch").mockImplementation(async (input: RequestInfo | URL, _init?: RequestInit) => {
+    vi.spyOn(global, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
       const url = input.toString();
       
       if (url.endsWith("/handshake") || url.endsWith("/authenticate") || url.endsWith("/tenant/claim")) {

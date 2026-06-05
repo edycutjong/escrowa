@@ -13,7 +13,7 @@ test.describe("Escrowa Responsive Layout Tests", () => {
       await page.goto("/");
 
       // Verify header branding matches viewport
-      const brand = page.locator("header").getByText("Escrowa");
+      const brand = page.locator("header").getByText("Escrowa", { exact: true });
       await expect(brand).toBeVisible();
 
       // Check if there is any horizontal scrollbar

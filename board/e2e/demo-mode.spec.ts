@@ -8,7 +8,7 @@ test.describe("Escrowa Smoke Tests", () => {
     await expect(page).toHaveTitle(/Escrowa/);
     
     // Check that branding logo is present
-    const logo = page.locator("header").getByText("Escrowa");
+    const logo = page.locator("header").getByText("Escrowa", { exact: true });
     await expect(logo).toBeVisible();
 
     // Check that TEE Enclave badge exists

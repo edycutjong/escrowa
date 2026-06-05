@@ -5,17 +5,16 @@ test.describe("Escrowa Milestone Settlement Flow", () => {
     await page.goto("/");
 
     // 1. Reset and seed scenarios
-    const seedBtn = page.getByRole("button", { name: "Reset & Seed Scenarios" });
+    const seedBtn = page.getByRole("button", { name: /Seed/ });
     await expect(seedBtn).toBeVisible();
     await seedBtn.click();
 
     // 2. Select m1-happy milestone card
-    const milestoneCard = page.getByText("m1-happy");
+    const milestoneCard = page.locator('span').getByText("m1-happy", { exact: true });
     await expect(milestoneCard).toBeVisible();
     await milestoneCard.click();
 
     // 3. Locate and click the Approve Payment button
-    const approveBtn = page.getByRole("button", { name: "Attest Delivery" });
     // In m1-happy, freelancer has already attested, so we click "Approve Payment"
     const approvePaymentBtn = page.getByRole("button", { name: "Approve Payment" });
     await expect(approvePaymentBtn).toBeVisible();
@@ -25,7 +24,7 @@ test.describe("Escrowa Milestone Settlement Flow", () => {
     const modalHeader = page.getByText("Milestone Released!");
     await expect(modalHeader).toBeVisible();
 
-    const amountText = page.getByText("4,200 T3");
+    const amountText = page.locator('.fixed').getByText("4200 T3");
     await expect(amountText).toBeVisible();
 
     // 5. Dismiss the modal

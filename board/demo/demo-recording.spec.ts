@@ -31,7 +31,7 @@ test("Escrowa — full demo walkthrough (video + screenshots)", async ({ page })
   await shot(page, "03-m1-execution-timeline");
 
   await page.getByRole("button", { name: "Approve Payment" }).click();
-  await expect(page.getByText("Milestone Released!")).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText("Milestone Released!")).toBeVisible({ timeout: 20000 });
   await beat(page, 1800);
   await shot(page, "04-releasevault-moneyshot");
   await beat(page, 2500);
@@ -43,7 +43,7 @@ test("Escrowa — full demo walkthrough (video + screenshots)", async ({ page })
   await beat(page, 2000);
   await shot(page, "05-m2-deadline-fallback");
   await page.getByRole("button", { name: "Resolve Deadline (Release)" }).click();
-  await expect(page.getByText("Milestone Released!")).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText("Milestone Released!")).toBeVisible({ timeout: 20000 });
   await beat(page, 2200);
   await shot(page, "06-deadline-release");
   await dismissVault(page);

@@ -180,15 +180,41 @@ export default function Dashboard() {
     }
   };
 
+  const getStatusBar = (status: string) => {
+    switch (status) {
+      case "funded":
+        return "from-slate-500 to-slate-600";
+      case "delivered":
+        return "from-amber-400 to-amber-500";
+      case "released":
+        return "from-emerald-400 to-teal-500";
+      case "refunded":
+        return "from-rose-400 to-rose-500";
+      default:
+        return "from-slate-600 to-slate-700";
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col selection:bg-emerald-500 selection:text-slate-900 overflow-x-hidden w-full">
-      
+    <div className="relative min-h-screen text-slate-100 font-sans flex flex-col selection:bg-emerald-500 selection:text-slate-900 overflow-x-hidden w-full">
+
+      {/* AMBIENT BACKDROP — animated aurora + blueprint grid */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="grid-overlay absolute inset-0 opacity-[0.06]" />
+        <div className="absolute -top-48 -left-40 w-[42rem] h-[42rem] rounded-full blur-3xl animate-aurora bg-[radial-gradient(circle,rgba(16,185,129,0.20),transparent_60%)]" />
+        <div className="absolute top-1/4 -right-48 w-[40rem] h-[40rem] rounded-full blur-3xl animate-aurora [animation-delay:-7s] bg-[radial-gradient(circle,rgba(20,184,166,0.16),transparent_60%)]" />
+        <div className="absolute bottom-[-12rem] left-1/3 w-[36rem] h-[36rem] rounded-full blur-3xl animate-aurora [animation-delay:-14s] bg-[radial-gradient(circle,rgba(99,102,241,0.12),transparent_60%)]" />
+      </div>
+
       {/* HEADER */}
       <header className="border-b border-slate-800 bg-slate-900/40 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-18 flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icon.svg" alt="Escrowa Logo" className="w-10 h-10 object-contain" />
+            <div className="relative shrink-0">
+              <div aria-hidden className="absolute inset-0 rounded-xl bg-emerald-500/40 blur-md animate-glow" />
+              <img src="/icon.svg" alt="Escrowa Logo" className="relative w-10 h-10 object-contain" />
+            </div>
             <div>
               <span className="font-bold tracking-tight text-lg bg-linear-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
                 Escrowa
@@ -204,13 +230,13 @@ export default function Dashboard() {
             <button
               onClick={handleSeed}
               disabled={isSeeding}
-              className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition duration-200 text-xs sm:text-sm font-medium border border-slate-700 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 transition duration-200 text-xs sm:text-sm font-medium border border-slate-700 flex items-center gap-2 cursor-pointer disabled:opacity-50 hover:scale-[1.03] active:scale-95"
             >
               {isSeeding ? "Resetting..." : <><span className="hidden sm:inline">Reset & </span>Seed</>}
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 transition duration-200 text-slate-950 font-semibold text-xs sm:text-sm shadow-md shadow-emerald-500/10 cursor-pointer"
+              className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 transition duration-200 text-slate-950 font-semibold text-xs sm:text-sm shadow-lg shadow-emerald-500/30 hover:shadow-emerald-400/40 cursor-pointer hover:scale-[1.03] active:scale-95"
             >
               + Create<span className="hidden sm:inline"> Milestone</span>
             </button>
@@ -220,23 +246,35 @@ export default function Dashboard() {
 
       {/* DASHBOARD STATS */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 w-full mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-slate-900/30 border border-slate-850 p-6 rounded-2xl">
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Value Secured</span>
-          <div className="text-3xl font-bold mt-2 text-slate-50">
-            {milestones.filter(m => m.status === "funded" || m.status === "delivered").reduce((acc, m) => acc + m.amount, 0).toLocaleString()} <span className="text-emerald-400 text-lg font-mono">T3</span>
+        <div className="group relative overflow-hidden bg-slate-900/40 border border-slate-800 p-6 rounded-2xl backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/10 animate-fade-in-up">
+          <div aria-hidden className="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-emerald-500/10 blur-2xl opacity-0 group-hover:opacity-100 transition duration-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Value Secured</span>
+            <span className="grid place-items-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-sm">🔒</span>
+          </div>
+          <div className="text-4xl font-bold mt-3 text-gradient tracking-tight">
+            {milestones.filter(m => m.status === "funded" || m.status === "delivered").reduce((acc, m) => acc + m.amount, 0).toLocaleString()} <span className="text-slate-400 text-lg font-mono">T3</span>
           </div>
           <span className="text-xs text-slate-500 mt-2 block">Locked under contract logic (simulated enclave)</span>
         </div>
-        <div className="bg-slate-900/30 border border-slate-850 p-6 rounded-2xl">
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Released Payouts</span>
-          <div className="text-3xl font-bold mt-2 text-emerald-400">
-            {milestones.filter(m => m.status === "released").reduce((acc, m) => acc + m.amount, 0).toLocaleString()} <span className="text-slate-300 text-lg font-mono">T3</span>
+        <div className="group relative overflow-hidden bg-slate-900/40 border border-slate-800 p-6 rounded-2xl backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/10 animate-fade-in-up [animation-delay:80ms]">
+          <div aria-hidden className="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-emerald-500/10 blur-2xl opacity-0 group-hover:opacity-100 transition duration-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Released Payouts</span>
+            <span className="grid place-items-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-sm">💸</span>
+          </div>
+          <div className="text-4xl font-bold mt-3 text-gradient tracking-tight">
+            {milestones.filter(m => m.status === "released").reduce((acc, m) => acc + m.amount, 0).toLocaleString()} <span className="text-slate-400 text-lg font-mono">T3</span>
           </div>
           <span className="text-xs text-slate-500 mt-2 block">Settled with exactly-once outbox delivery</span>
         </div>
-        <div className="bg-slate-900/30 border border-slate-850 p-6 rounded-2xl">
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Milestones</span>
-          <div className="text-3xl font-bold mt-2 text-amber-400">
+        <div className="group relative overflow-hidden bg-slate-900/40 border border-slate-800 p-6 rounded-2xl backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-amber-500/40 hover:shadow-xl hover:shadow-amber-500/10 animate-fade-in-up [animation-delay:160ms]">
+          <div aria-hidden className="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-amber-500/10 blur-2xl opacity-0 group-hover:opacity-100 transition duration-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Milestones</span>
+            <span className="grid place-items-center w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm">⏳</span>
+          </div>
+          <div className="text-4xl font-bold mt-3 text-amber-400 tracking-tight">
             {milestones.filter(m => m.status === "funded" || m.status === "delivered").length}
           </div>
           <span className="text-xs text-slate-500 mt-2 block">Pending dual-attestation signatures</span>
@@ -264,13 +302,15 @@ export default function Dashboard() {
                 <div
                   key={m.id}
                   onClick={() => setSelectedMilestone(m)}
-                  className={`p-5 rounded-2xl border transition duration-200 flex items-center justify-between cursor-pointer ${
+                  className={`group relative overflow-hidden p-5 pl-6 rounded-2xl border transition duration-300 flex items-center justify-between cursor-pointer hover:-translate-y-0.5 ${
                     selectedMilestone?.id === m.id
-                      ? "border-emerald-500/60 bg-slate-900/50 shadow-lg shadow-emerald-500/5"
-                      : "border-slate-850 bg-slate-900/20 hover:border-slate-700"
+                      ? "border-emerald-500/60 bg-slate-900/50 shadow-lg shadow-emerald-500/10"
+                      : "border-slate-850 bg-slate-900/20 hover:border-slate-700 hover:shadow-lg hover:shadow-emerald-500/5"
                   }`}
                 >
-                  <div className="flex flex-col gap-2">
+                  <span aria-hidden className={`absolute left-0 top-0 h-full w-1.5 bg-linear-to-b ${getStatusBar(m.status)}`} />
+                  <div aria-hidden className="absolute inset-0 bg-linear-to-r from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition duration-300" />
+                  <div className="relative flex flex-col gap-2">
                     <div className="flex items-center gap-3">
                       <span className="font-bold text-slate-100">{m.id}</span>
                       <span className={`px-2.5 py-0.5 rounded-full text-xxs font-semibold uppercase tracking-wider ${getStatusColor(m.status)}`}>
@@ -576,15 +616,35 @@ export default function Dashboard() {
 
       {/* RELEASE VAULT ANIMATION TAKEOVER */}
       {releasedMilestone && (
-        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in select-none">
-          <div className="text-center max-w-lg p-8 flex flex-col items-center gap-6">
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in select-none overflow-hidden">
+          <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(16,185,129,0.18),transparent_60%)]" />
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+            {[...Array(16)].map((_, i) => (
+              <span
+                key={i}
+                className="absolute top-0 w-2 h-3 rounded-sm animate-confetti"
+                style={{
+                  left: `${(i * 6.3 + 4) % 100}%`,
+                  background: ["#34d399", "#2dd4bf", "#fbbf24", "#818cf8", "#f472b6"][i % 5],
+                  animationDelay: `${(i % 8) * 0.18}s`,
+                  animationDuration: `${2 + (i % 5) * 0.35}s`,
+                }}
+              />
+            ))}
+          </div>
+          <div className="relative text-center max-w-lg p-8 flex flex-col items-center gap-6">
             
             {/* Vault Graphic Icon */}
-            <div className="relative w-40 h-40 bg-slate-900 border-2 border-emerald-500/60 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/20 animate-spin-slow">
-              {/* Spinning ticks */}
-              <div className="absolute inset-2 border border-dashed border-slate-700 rounded-full"></div>
-              {/* Glowing inner lock */}
-              <div className="w-16 h-16 rounded-xl bg-linear-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-slate-950 text-2xl animate-pulse">
+            <div className="relative w-40 h-40 flex items-center justify-center">
+              {/* expanding pulse rings */}
+              <div aria-hidden className="absolute inset-0 rounded-full border border-emerald-400/40 animate-ring" />
+              <div aria-hidden className="absolute inset-0 rounded-full border border-teal-400/30 animate-ring [animation-delay:0.7s]" />
+              {/* rotating shell */}
+              <div className="absolute inset-0 rounded-full border-2 border-emerald-500/60 bg-slate-900/80 shadow-2xl shadow-emerald-500/30 animate-spin-slow">
+                <div className="absolute inset-2 border border-dashed border-slate-700 rounded-full" />
+              </div>
+              {/* glowing inner core */}
+              <div className="relative w-16 h-16 rounded-xl bg-linear-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-slate-950 text-2xl shadow-lg shadow-emerald-400/50 animate-float">
                 TEE
               </div>
             </div>

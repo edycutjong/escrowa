@@ -1,46 +1,78 @@
 #!/usr/bin/env python3
+"""Submission readiness gate for Escrowa.
+
+Run from the repo root:  ./scripts/check_submission_readiness.py
+
+Checks two things:
+  1. No leftover angle-bracket placeholders survive in any shipped doc.
+  2. Every mandatory deliverable (BUGS.md, DEMO.md, ARCHITECTURE.md, bench.py, …) exists.
+
+Exits non-zero if anything is missing so CI can gate on it.
+"""
 import os
 import sys
 
+# Resolve paths relative to the repo root (parent of this scripts/ dir),
+# so the gate works no matter what directory it's invoked from.
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+PLACEHOLDERS = ["<repo>", "<vercel-url>", "<link>", "<explorer-link>", "<ref>"]
+
+# Docs that are actually shipped in this repo (relative to REPO_ROOT).
+DOCS_TO_SCAN = [
+    "README.md",
+    "BUGS.md",
+    "docs/ARCHITECTURE.md",
+    "docs/DEMO.md",
+    "docs/PRODUCTION_PLAN.md",
+    "docs/SPONSOR_DEFENSE.md",
+    "board/README.md",
+    "contract/README.md",
+]
+
+# Files that MUST exist for the submission to be considered ready.
+REQUIRED_DELIVERABLES = [
+    "BUGS.md",
+    "docs/DEMO.md",
+    "docs/ARCHITECTURE.md",
+    "scripts/bench.py",
+    "scripts/check_submission_readiness.py",
+]
+
+
 def main():
-    print("🔍 Checking documentation for leftover placeholders...")
-    placeholders = ["<repo>", "<vercel-url>", "<link>", "<explorer-link>"]
-    
-    files_to_check = [
-        "README.md",
-        "SUBMISSION.md",
-        "PRODUCTION_PLAN.md",
-        "SPONSOR_DEFENSE.md",
-        "PRD.md",
-        "ARCHITECTURE.md",
-        "BUILD_PLAN.md",
-        "SEED_DATA.md",
-        "UI.md"
-    ]
-    
     errors = 0
-    for file_name in files_to_check:
-        if not os.path.exists(file_name):
-            # If the file is not in root but exists in workspace, check it there
+
+    print("🔍 Checking mandatory deliverables exist...")
+    for rel in REQUIRED_DELIVERABLES:
+        if not os.path.exists(os.path.join(REPO_ROOT, rel)):
+            print(f"❌ Missing required deliverable: '{rel}'")
+            errors += 1
+
+    print("🔍 Checking shipped docs for leftover placeholders...")
+    for rel in DOCS_TO_SCAN:
+        path = os.path.join(REPO_ROOT, rel)
+        if not os.path.exists(path):
+            # Not every optional doc has to be present; only deliverables are enforced above.
             continue
-            
         try:
-            with open(file_name, "r") as f:
+            with open(path, "r") as f:
                 content = f.read()
-                
-            for p in placeholders:
-                if p in content:
-                    print(f"❌ Error: Placeholder '{p}' found in file '{file_name}'")
-                    errors += 1
-        except Exception as e:
-            print(f"⚠️ Warning: Could not read file '{file_name}': {e}")
-            
+        except Exception as e:  # pragma: no cover - defensive
+            print(f"⚠️  Warning: could not read '{rel}': {e}")
+            continue
+        for p in PLACEHOLDERS:
+            if p in content:
+                print(f"❌ Placeholder '{p}' still present in '{rel}'")
+                errors += 1
+
     if errors > 0:
-        print(f"\n❌ Found {errors} placeholders. Fix them before submission.")
+        print(f"\n❌ Found {errors} issue(s). Fix them before submission.")
         sys.exit(1)
-        
-    print("\n✅ No placeholders found. Ready for submission!")
+
+    print("\n✅ All deliverables present and no placeholders found. Ready for submission!")
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

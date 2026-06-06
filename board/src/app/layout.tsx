@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Escrowa — TEE-secured Autonomous Escrow Agent",
     description: "Get paid the moment the work is done. A did:t3n escrow agent that secures funds in a TEE and releases them when both sides agree.",
-    url: "https://escrowa.vercel.app",
+    url: "https://escrowa.edycu.dev",
     siteName: "Escrowa",
     images: [
       {

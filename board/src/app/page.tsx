@@ -298,11 +298,12 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {milestones.map((m) => (
+              {milestones.map((m, i) => (
                 <div
                   key={m.id}
                   onClick={() => setSelectedMilestone(m)}
-                  className={`group relative overflow-hidden p-5 pl-6 rounded-2xl border transition duration-300 flex items-center justify-between cursor-pointer hover:-translate-y-0.5 ${
+                  style={{ animationDelay: `${i * 80}ms` }}
+                  className={`animate-fade-in-up group relative overflow-hidden p-5 pl-6 rounded-2xl border transition duration-300 flex items-center justify-between cursor-pointer hover:-translate-y-0.5 ${
                     selectedMilestone?.id === m.id
                       ? "border-emerald-500/60 bg-slate-900/50 shadow-lg shadow-emerald-500/10"
                       : "border-slate-850 bg-slate-900/20 hover:border-slate-700 hover:shadow-lg hover:shadow-emerald-500/5"
@@ -344,10 +345,10 @@ export default function Dashboard() {
           <h2 className="text-xl font-bold text-slate-100">Details & Audit</h2>
           
           {selectedMilestone ? (
-            <div className="bg-slate-900/40 border border-slate-850 p-6 rounded-2xl flex flex-col gap-6">
-              
+            <div key={selectedMilestone.id} className="bg-slate-900/40 border border-slate-850 p-6 rounded-2xl flex flex-col gap-6">
+
               {/* HEADER INFO */}
-              <div>
+              <div className="animate-fade-in-up">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold text-slate-50">{selectedMilestone.id}</h3>
                   <span className="text-lg font-bold text-emerald-400 font-mono">
@@ -381,7 +382,7 @@ export default function Dashboard() {
 
               {/* ACTION PANEL */}
               {selectedMilestone.status !== "released" && selectedMilestone.status !== "refunded" && (
-                <div className="p-4 border border-slate-800 bg-slate-900/60 rounded-2xl flex flex-col gap-4">
+                <div className="animate-fade-in-up [animation-delay:90ms] p-4 border border-slate-800 bg-slate-900/60 rounded-2xl flex flex-col gap-4">
                   <h4 className="text-sm font-bold text-slate-200">Enclave Settlement Actions</h4>
                   
                   <div className="grid grid-cols-2 gap-3">
@@ -443,13 +444,13 @@ export default function Dashboard() {
               )}
 
               {/* AUDIT / PROOF TIMELINE */}
-              <div className="flex flex-col gap-4">
+              <div className="animate-fade-in-up [animation-delay:180ms] flex flex-col gap-4">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Audit & Execution Proofs</span>
                 
                 <div className="relative border-l border-slate-800 ml-3.5 pl-6 space-y-6">
                   
                   {/* Step 1: Funded */}
-                  <div className="relative">
+                  <div className="relative animate-fade-in-up [animation-delay:220ms]">
                     <span className="absolute -left-9.5 top-0.5 bg-slate-900 border border-slate-800 text-slate-400 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-mono">
                       1
                     </span>
@@ -458,7 +459,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* Step 2: Delivery Attestation */}
-                  <div className="relative">
+                  <div className="relative animate-fade-in-up [animation-delay:300ms]">
                     <span className={`absolute -left-9.5 top-0.5 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-mono border ${
                       selectedMilestone.attestations.some(a => a.kind === "delivered")
                         ? "bg-indigo-950 border-indigo-500/50 text-indigo-400"
@@ -480,7 +481,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* Step 3: Approval Attestation */}
-                  <div className="relative">
+                  <div className="relative animate-fade-in-up [animation-delay:380ms]">
                     <span className={`absolute -left-9.5 top-0.5 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-mono border ${
                       selectedMilestone.attestations.some(a => a.kind === "approved")
                         ? "bg-emerald-950 border-emerald-500/50 text-emerald-400"
@@ -502,7 +503,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* Step 4: Enclave Settlement */}
-                  <div className="relative">
+                  <div className="relative animate-fade-in-up [animation-delay:460ms]">
                     <span className={`absolute -left-9.5 top-0.5 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-mono border ${
                       selectedMilestone.status === "released" || selectedMilestone.status === "refunded"
                         ? "bg-emerald-500 text-slate-950 border-emerald-400"

@@ -688,6 +688,32 @@ describe("Escrowa TEE Agent & Contract Test Suite (115+ Assertions)", () => {
           })
         ).rejects.toThrow("Invalid output from WASM module");
       });
+
+      it("returns a falsy decoded payload without caching", async () => {
+        mockDispatch = () => {
+          return { tag: "ok", val: { outputJson: "null" } };
+        };
+        const result = await client.executeAndDecode({
+          script_name: "z:tenant:escrow",
+          script_version: "1.0.0",
+          function_name: "create-milestone",
+          input: {},
+        });
+        expect(result).toBeNull();
+      });
+
+      it("handles null decoded JSON response successfully without caching", async () => {
+        mockDispatch = () => {
+          return { tag: "ok", val: { outputJson: "null" } };
+        };
+        const res = await client.executeAndDecode({
+          script_name: "z:tenant:escrow",
+          script_version: "1.0.0",
+          function_name: "create-milestone",
+          input: {},
+        });
+        expect(res).toBeNull();
+      });
     });
 
     it("uses NEXT_PUBLIC_T3_API_KEY if T3_API_KEY is not set", () => {

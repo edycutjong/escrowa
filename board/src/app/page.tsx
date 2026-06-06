@@ -201,9 +201,9 @@ export default function Dashboard() {
       {/* AMBIENT BACKDROP — animated aurora + blueprint grid */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="grid-overlay absolute inset-0 opacity-[0.06]" />
-        <div className="absolute -top-48 -left-40 w-[42rem] h-[42rem] rounded-full blur-3xl animate-aurora bg-[radial-gradient(circle,rgba(16,185,129,0.20),transparent_60%)]" />
-        <div className="absolute top-1/4 -right-48 w-[40rem] h-[40rem] rounded-full blur-3xl animate-aurora [animation-delay:-7s] bg-[radial-gradient(circle,rgba(20,184,166,0.16),transparent_60%)]" />
-        <div className="absolute bottom-[-12rem] left-1/3 w-[36rem] h-[36rem] rounded-full blur-3xl animate-aurora [animation-delay:-14s] bg-[radial-gradient(circle,rgba(99,102,241,0.12),transparent_60%)]" />
+        <div className="absolute -top-48 -left-40 w-2xl h-168 rounded-full blur-3xl animate-aurora bg-[radial-gradient(circle,rgba(16,185,129,0.20),transparent_60%)]" />
+        <div className="absolute top-1/4 -right-48 w-160 h-160 rounded-full blur-3xl animate-aurora [animation-delay:-7s] bg-[radial-gradient(circle,rgba(20,184,166,0.16),transparent_60%)]" />
+        <div className="absolute -bottom-48 left-1/3 w-xl h-144 rounded-full blur-3xl animate-aurora [animation-delay:-14s] bg-[radial-gradient(circle,rgba(99,102,241,0.12),transparent_60%)]" />
       </div>
 
       {/* HEADER */}

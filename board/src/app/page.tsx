@@ -190,7 +190,7 @@ export default function Dashboard() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/icon.svg" alt="Escrowa Logo" className="w-10 h-10 object-contain" />
             <div>
-              <span className="font-bold tracking-tight text-lg bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+              <span className="font-bold tracking-tight text-lg bg-linear-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
                 Escrowa
               </span>
               <div className="text-xxs text-slate-400 font-mono flex items-center gap-1.5">
@@ -210,7 +210,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 transition duration-200 text-slate-950 font-semibold text-xs sm:text-sm shadow-md shadow-emerald-500/10 cursor-pointer"
+              className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 transition duration-200 text-slate-950 font-semibold text-xs sm:text-sm shadow-md shadow-emerald-500/10 cursor-pointer"
             >
               + Create<span className="hidden sm:inline"> Milestone</span>
             </button>
@@ -584,13 +584,13 @@ export default function Dashboard() {
               {/* Spinning ticks */}
               <div className="absolute inset-2 border border-dashed border-slate-700 rounded-full"></div>
               {/* Glowing inner lock */}
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-slate-950 text-2xl animate-pulse">
+              <div className="w-16 h-16 rounded-xl bg-linear-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-slate-950 text-2xl animate-pulse">
                 TEE
               </div>
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-3xl font-extrabold bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent animate-bounce">
+              <h2 className="text-3xl font-extrabold bg-linear-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent animate-bounce">
                 Milestone Released!
               </h2>
               <p className="text-slate-400 text-sm">

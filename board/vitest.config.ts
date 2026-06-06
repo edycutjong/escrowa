@@ -5,12 +5,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    exclude: ["**/node_modules/**", "**/e2e/**"],
+    exclude: ["**/node_modules/**", "**/e2e/**", "**/demo/**"],
     coverage: {
       provider: "v8",
       exclude: [
         "**/node_modules/**",
         "**/e2e/**",
+        "**/demo/**",
         ".next/**",
         "out/**",
         "build/**",

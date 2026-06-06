@@ -78,11 +78,11 @@ flowchart LR
 ## 🏆 Sponsor Tracks Targeted & SDK Surface Area
 
 We use **six** distinct Terminal 3 host capability interfaces:
-1. **`signing`** (`contract/src/lib.rs:208`): Generates secp256k1 signatures for release payouts inside the TEE. Keys never leave the enclave.
-2. **`outbox`** (`contract/src/lib.rs:223`): Posts payouts to the settlement system exactly-once (prevents double-spending).
-3. **`kv-store`** (`contract/src/lib.rs:78`): Stores namespace-isolated milestone states securely.
-4. **`did-registry` & `agent-registry`** (`board/src/app/api/seed/route.ts`): Registers self-sovereign identities for the parties.
-5. **`agent-auth`** (`board/src/app/api/milestones/route.ts`): Restricts agent execution rights to release/refund functions.
+1. **`signing`** (`contract/src/lib.rs:224`): Generates secp256k1 signatures for release payouts inside the TEE. Keys never leave the enclave.
+2. **`outbox`** (`contract/src/lib.rs:239`): Posts payouts to the settlement system exactly-once (prevents double-spending).
+3. **`kv-store`** (`contract/src/lib.rs:83`): Stores namespace-isolated milestone states securely.
+4. **`did-registry` & `agent-registry`** (`board/src/sdk/didRegistry.ts`, wired in `board/src/app/api/seed/route.ts`): Links each party's authenticator to its `did:t3n` identity and publishes the Escrowa agent URI.
+5. **`agent-auth`** (`board/src/sdk/agentAuth.ts`, enforced in `board/src/sdk/T3nClient.ts`): Provisions Escrowa a **least-privilege scope** (allowed functions + `allowedHosts` egress allowlist) and the host blocks any call outside it — an out-of-scope function fails with `host/agent.function_denied` and an unauthorized host with `host/http.egress_denied`.
 6. **TEE Attestation (Intel TDX):** Enforces execution of compiled WASM logic inside hardware-secured VMs.
 
 ---
@@ -145,6 +145,7 @@ npm run test
 | **Deadline Fallback** | Verifies deadline timeout automatically triggers release/refund | ✅ Passing |
 | **Arbiter Dispute** | Verifies arbiter-only decision resolution | ✅ Passing |
 | **Replay Protection** | Asserts duplicate attestation requests are rejected | ✅ Passing |
+| **Agent-Auth Scope** | Asserts out-of-scope functions (`host/agent.function_denied`) and non-allowlisted egress (`host/http.egress_denied`) are blocked | ✅ Passing |
 
 ---
 

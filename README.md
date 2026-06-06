@@ -1,3 +1,6 @@
+<!-- 👩‍⚖️ DoraHacks judges: start at "For Judges (start here)" below — what it is, tracks, a 60-second verify, and where the code lives. -->
+> 👩‍⚖️ **DoraHacks judges:** jump to [**For Judges (start here)**](#-for-judges-start-here) — tracks, a 60-second verify, and where the real code lives.
+
 <div align="center">
   <h1>Escrowa 🛡️</h1>
   <p><em>Get paid the moment the work is done — TEE-secured autonomous escrow agent.</em></p>
@@ -16,6 +19,35 @@
   ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
   ![Tailwind](https://img.shields.io/badge/Tailwind_v4-38B2AC?style=flat&logo=tailwindcss&logoColor=white)
 </div>
+
+---
+
+## 👩‍⚖️ For Judges (start here)
+
+**What it is:** a `did:t3n` autonomous escrow agent — a client funds a milestone, the freelancer and client each sign a cryptographic attestation, and when both match (or a deadline/arbiter rule fires) a Rust→WASM contract releases the payout. No single party — not even Escrowa — can move the funds alone.
+
+**Tracks targeted**
+- 🥇 **$300 — Best Agent Auth SDK** (primary): a real least-privilege `agent-auth` implementation — see below.
+- 🐞 **$200 — Bug & documentation log**: [`BUGS.md`](BUGS.md) (ADK doc/SDK gaps found while building, e.g. `signing` not yet available to tenant contracts, `t3n:host/*` WIT naming).
+
+**Verify in ~60 seconds**
+```bash
+cd contract && cargo test          # 18 Rust contract tests
+cd ../board && npm run ci          # lint + typecheck + 54 Vitest tests @ 100% coverage
+npm run e2e                        # 10 Playwright e2e (auto-starts dev server)
+npm run dev                        # then open http://localhost:3000 and click "Reset & Seed"
+```
+
+**Where the substance is**
+| Concern | File |
+|---|---|
+| **Agent-auth** (scoped functions + `allowedHosts` egress allowlist; blocks out-of-scope calls with `host/agent.function_denied` / `host/http.egress_denied`) | [`board/src/sdk/agentAuth.ts`](board/src/sdk/agentAuth.ts), enforced in [`T3nClient.ts`](board/src/sdk/T3nClient.ts) |
+| **Escrow state machine** (fund → dual-attest → release; deadline & arbiter fallbacks) | [`contract/src/lib.rs`](contract/src/lib.rs) |
+| **did-registry / agent-registry** | [`board/src/sdk/didRegistry.ts`](board/src/sdk/didRegistry.ts) |
+| **Tests** (72 total; key-custody + agent-auth + dual-consent) | `board/src/**/*.test.ts`, `contract/src/lib.rs` |
+| **Demo script & architecture** | [`docs/DEMO.md`](docs/DEMO.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+
+**Honest scope:** the Rust→WASM contract logic and the secp256k1 signatures are **real**; the TEE, host interfaces, and settlement reference are **simulated locally** for this hackathon build (T3N is production-ready for when the network launches). Full disclosure in the **Hackathon Simulation Context** note below. Nothing in this repo claims a real on-chain transfer.
 
 ---
 
@@ -84,6 +116,23 @@ We use **six** distinct Terminal 3 host capability interfaces:
 4. **`did-registry` & `agent-registry`** (`board/src/sdk/didRegistry.ts`, wired in `board/src/app/api/seed/route.ts`): Links each party's authenticator to its `did:t3n` identity and publishes the Escrowa agent URI.
 5. **`agent-auth`** (`board/src/sdk/agentAuth.ts`, enforced in `board/src/sdk/T3nClient.ts`): Provisions Escrowa a **least-privilege scope** (allowed functions + `allowedHosts` egress allowlist) and the host blocks any call outside it — an out-of-scope function fails with `host/agent.function_denied` and an unauthorized host with `host/http.egress_denied`.
 6. **TEE Attestation (Intel TDX):** Enforces execution of compiled WASM logic inside hardware-secured VMs.
+
+---
+
+## 🪪 Identities (did:t3n)
+
+The demo provisions these identities via the `did-registry` / `agent-registry` (see `board/src/app/api/seed/route.ts`). DIDs are `did:t3n:<authenticator-address>`.
+
+| Role | Authenticator address | DID |
+|---|---|---|
+| **Client** | `0x1111111111111111111111111111111111111111` | `did:t3n:0x1111111111111111111111111111111111111111` |
+| **Freelancer** (Priya) | `0x2222222222222222222222222222222222222222` | `did:t3n:0x2222222222222222222222222222222222222222` |
+| **Arbiter** | `0x3333333333333333333333333333333333333333` | `did:t3n:0x3333333333333333333333333333333333333333` |
+| **Escrowa agent** | — | `did:t3n:escrowa-agent` (URI `https://escrowa.edycu.dev/.well-known/agent`) |
+
+The Escrowa agent is granted a least-privilege `agent-auth` scope: functions `create-milestone`, `submit-attestation`, `resolve-milestone`; egress allowlist `api.terminal3.io` (see `board/src/sdk/agentAuth.ts`).
+
+> These are deterministic demo identities for the simulated build. A real deployment would obtain its `did:t3n` and developer key from the [claim page](https://www.terminal3.io/claim-page) (set as `T3N_API_KEY`).
 
 ---
 

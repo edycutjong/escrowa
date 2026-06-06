@@ -17,6 +17,7 @@
     "ci:full": "npm run ci && npm run build && npm run e2e",
     "e2e": "npx playwright test",
     "e2e:ui": "npx playwright test --ui",
+    "demo:record": "playwright test --config=playwright.record.config.ts",
     "lighthouse": "npx lhci autorun"
   },
   "dependencies": {

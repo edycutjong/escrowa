@@ -1,4 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import {
+  ESCROWA_AGENT_DID,
+  SETTLEMENT_URL,
+  ensureEscrowaProvisioned,
+  assertFunctionAllowed,
+  assertEgressAllowed,
+} from "./agentAuth";
+
 export type ReleaseRule = {
   requireDelivered: boolean;
   requireApproved: boolean;
@@ -124,6 +132,16 @@ export class T3nClient {
   }): Promise<any> {
     if (!this.isHandshakeDone || !this.authenticatedAddress) {
       throw new Error("Client not authenticated");
+    }
+
+    // agent-auth (Terminal 3 host interface): Escrowa is provisioned a least-privilege
+    // scope and the host blocks any call outside it — the agent cannot invoke a function
+    // it was not delegated. Payout-capable functions additionally require the settlement
+    // host to be in the egress allowlist (an unauthorized host → host/http.egress_denied).
+    ensureEscrowaProvisioned();
+    assertFunctionAllowed(ESCROWA_AGENT_DID, params.function_name);
+    if (params.function_name === "submit-attestation" || params.function_name === "resolve-milestone") {
+      assertEgressAllowed(ESCROWA_AGENT_DID, SETTLEMENT_URL);
     }
 
     // Execute the compiled Rust WASM contract locally!

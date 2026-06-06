@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { T3nClient, createEthAuthInput } from "@/sdk/T3nClient";
 import { clearStore } from "@/wasm/host";
+import { registerDid, registerAgent } from "@/sdk/didRegistry";
+import { updateAgentAuth, ESCROWA_AGENT_DID, ESCROWA_DEFAULT_SCOPE } from "@/sdk/agentAuth";
 
 export async function POST() {
   T3nClient.clearStore();
@@ -12,6 +14,17 @@ export async function POST() {
   const clientDid = "did:t3n:0x1111111111111111111111111111111111111111";
   const freelancerDid = "did:t3n:0x2222222222222222222222222222222222222222";
   const arbiterDid = "did:t3n:0x3333333333333333333333333333333333333333";
+
+  // did-registry / agent-registry: link the parties' authenticators to their
+  // did:t3n identities, then publish the Escrowa agent URI.
+  registerDid(clientDid, "0x1111111111111111111111111111111111111111");
+  registerDid(freelancerDid, "0x2222222222222222222222222222222222222222");
+  registerDid(arbiterDid, "0x3333333333333333333333333333333333333333");
+  registerAgent(ESCROWA_AGENT_DID, "https://escrowa.edycu.dev/.well-known/agent");
+
+  // agent-auth: provision Escrowa's least-privilege scope (escrow functions +
+  // settlement egress only). The host blocks anything outside this grant.
+  updateAgentAuth(ESCROWA_AGENT_DID, ESCROWA_DEFAULT_SCOPE);
 
   try {
     // Scenario 1: m1-happy (ready for client approval)

@@ -226,7 +226,7 @@ export default function Dashboard() {
           <div className="text-3xl font-bold mt-2 text-slate-50">
             {milestones.filter(m => m.status === "funded" || m.status === "delivered").reduce((acc, m) => acc + m.amount, 0).toLocaleString()} <span className="text-emerald-400 text-lg font-mono">T3</span>
           </div>
-          <span className="text-xs text-slate-500 mt-2 block">Locked safely in hardware enclaves</span>
+          <span className="text-xs text-slate-500 mt-2 block">Locked under contract logic (simulated enclave)</span>
         </div>
         <div className="bg-slate-900/30 border border-slate-850 p-6 rounded-2xl">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Released Payouts</span>
@@ -415,7 +415,7 @@ export default function Dashboard() {
                       1
                     </span>
                     <h5 className="text-xs font-bold text-slate-200">Milestone Funded</h5>
-                    <p className="text-xxs text-slate-400 mt-1">Tokens locked inside TEE vault under contract control.</p>
+                    <p className="text-xxs text-slate-400 mt-1">Tokens locked under contract control (simulated TEE vault).</p>
                   </div>
 
                   {/* Step 2: Delivery Attestation */}
@@ -474,7 +474,7 @@ export default function Dashboard() {
                     <h5 className="text-xs font-bold text-slate-200">TEE Release & Outbox Settlement</h5>
                     {selectedMilestone.status === "released" || selectedMilestone.status === "refunded" ? (
                       <div className="mt-1 space-y-1.5">
-                        <p className="text-xxs text-emerald-400">✓ Settled inside Enclave</p>
+                        <p className="text-xxs text-emerald-400">✓ Settled inside Enclave (simulated)</p>
                         <div className="text-[10px] text-slate-300 font-mono space-y-1 bg-slate-950/60 p-2.5 rounded border border-slate-900">
                           <div><span className="text-slate-500">Ref:</span> {selectedMilestone.settlementRef}</div>
                           <div className="truncate"><span className="text-slate-500">Proof:</span> {selectedMilestone.teeProof}</div>
@@ -502,7 +502,7 @@ export default function Dashboard() {
       <footer className="border-t border-slate-850 bg-slate-900/10 py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 md:px-6 text-center text-slate-500 text-xs flex justify-between gap-4">
           <span>Terminal 3 Agent Dev Kit Bounty Challenge (beta)</span>
-          <span className="font-mono">Secure TEE Sandbox Node V0.4.9</span>
+          <span className="font-mono">Simulated TEE Sandbox Node V0.4.9</span>
         </div>
       </footer>
 
@@ -595,7 +595,7 @@ export default function Dashboard() {
                 Milestone Released!
               </h2>
               <p className="text-slate-400 text-sm">
-                Conditional release logic evaluated true inside the hardware enclave.
+                Conditional release logic evaluated true inside the simulated enclave.
               </p>
             </div>
 
@@ -613,13 +613,13 @@ export default function Dashboard() {
                 <span className="text-slate-300">{releasedMilestone.freelancer.slice(0, 18)}...</span>
               </div>
               <div className="border-t border-slate-850 pt-2 flex flex-col gap-1">
-                <span className="text-slate-500 text-[10px]">Settlement Reference (Outbox):</span>
+                <span className="text-slate-500 text-[10px]">Settlement Reference (Outbox · simulated):</span>
                 <span className="text-teal-400 text-[10px] break-all select-all">{releasedMilestone.settlementRef}</span>
               </div>
             </div>
 
             <div className="text-xxs text-slate-500 italic mt-2">
-              🔒 Signed inside the TDX enclave. The private key never left the TEE.
+              🔒 Signed via the simulated TDX enclave host — models production key custody (keys never leave the TEE). See README.
             </div>
 
             <button

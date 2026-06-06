@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname, "../../"),
   },
-  serverExternalPackages: ["@bytecodealliance/jco"],
+  serverExternalPackages: ["@bytecodealliance/jco", "@bytecodealliance/preview2-shim"],
   // Hide the dev indicator so demo recordings (against `npm run dev`) are clean.
   devIndicators: false,
 };

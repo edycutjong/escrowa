@@ -2,6 +2,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAccount, useDisconnect, useSignMessage } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { buildAttestationSig } from "@/sdk/wallet";
 
 type Milestone = {
   id: string;
@@ -43,6 +46,12 @@ export default function Dashboard() {
 
   // Animation takeover state
   const [releasedMilestone, setReleasedMilestone] = useState<Milestone | null>(null);
+
+  // Real wallet via wagmi + RainbowKit (supports MetaMask, WalletConnect, Coinbase, …).
+  const { address } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+  const { disconnect } = useDisconnect();
+  const { openConnectModal } = useConnectModal();
 
   const fetchMilestones = async () => {
     try {
@@ -118,13 +127,15 @@ export default function Dashboard() {
 
   const handleAttest = async (milestoneId: string, kind: "delivered" | "approved") => {
     const by = kind === "delivered" ? selectedMilestone?.freelancer : selectedMilestone?.client;
-    const sig = `sig_${kind === "delivered" ? "freelancer" : "client"}_${Date.now()}`;
+    const fallbackSig = `sig_${kind === "delivered" ? "freelancer" : "client"}_${Date.now()}`;
 
     try {
+      // Real wallet signature when connected; simulated fallback for the seeded demo.
+      const { sig, signer } = await buildAttestationSig(address, signMessageAsync, { milestoneId, kind, by }, fallbackSig);
       const res = await fetch(`/api/milestones/${milestoneId}/attest`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ by, kind, sig }),
+        body: JSON.stringify({ by, kind, sig, signer }),
       });
       const data = await res.json();
       if (data.success) {
@@ -216,7 +227,7 @@ export default function Dashboard() {
               <img src="/icon.svg" alt="Escrowa Logo" className="relative w-10 h-10 object-contain" />
             </div>
             <div>
-              <span className="font-bold tracking-tight text-lg bg-linear-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+              <span className="font-display font-bold tracking-wide text-lg text-gradient">
                 Escrowa
               </span>
               <div className="text-xxs text-slate-400 font-mono flex items-center gap-1.5">
@@ -240,6 +251,31 @@ export default function Dashboard() {
             >
               + Create<span className="hidden sm:inline"> Milestone</span>
             </button>
+
+            {/* Wallet control — pinned far right */}
+            <span aria-hidden className="hidden sm:block w-px h-6 bg-slate-800" />
+            {address ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-mono">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {address.slice(0, 6)}…{address.slice(-4)}
+                </span>
+                <button
+                  onClick={() => disconnect()}
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-rose-300 hover:border-rose-500/40 text-xs sm:text-sm font-semibold transition duration-200 cursor-pointer hover:scale-[1.03] active:scale-95"
+                >
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={openConnectModal}
+                className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25 text-xs sm:text-sm font-semibold transition duration-200 cursor-pointer hover:scale-[1.03] active:scale-95 flex items-center gap-2"
+              >
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400" />
+                <span className="hidden sm:inline">Connect </span>Wallet
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -651,7 +687,7 @@ export default function Dashboard() {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-3xl font-extrabold bg-linear-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent animate-bounce">
+              <h2 className="font-display text-3xl font-extrabold text-gradient animate-bounce tracking-wide">
                 Milestone Released!
               </h2>
               <p className="text-slate-400 text-sm">

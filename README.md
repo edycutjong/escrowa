@@ -1,30 +1,8 @@
-<!-- 👩‍⚖️ DoraHacks judges: start at "For Judges (start here)" below — what it is, tracks, a 60-second verify, and where the code lives. -->
-> 👩‍⚖️ **DoraHacks judges:** jump to [**For Judges (start here)**](#-for-judges-start-here) — tracks, a 60-second verify, and where the real code lives.
-
-<div align="center">
-  <h1>Escrowa 🛡️</h1>
-  <p><em>Get paid the moment the work is done — TEE-secured autonomous escrow agent.</em></p>
-  <img src="docs/readme-hero.png" alt="Escrowa Banner" width="100%">
-
-  <br/>
-
-  [![Live Demo](https://img.shields.io/badge/🚀_Live-Demo-06b6d4?style=for-the-badge)](https://escrowa.edycu.dev)
-  [![Pitch Video](https://img.shields.io/badge/🎬_Pitch-Video-ef4444?style=for-the-badge)](https://youtu.be/escrowa-demo)
-  [![Built for DoraHacks](https://img.shields.io/badge/DoraHacks-T3_ADK_Bounty_Challenge-8b5cf6?style=for-the-badge)](https://dorahacks.io/hackathon/t3adkdevchallengebeta)
-
-  <br/>
-
-  ![Next.js](https://img.shields.io/badge/Next.js_16-black?style=flat&logo=next.js)
-  ![Rust](https://img.shields.io/badge/Rust_WASM-DEA584?style=flat&logo=rust&logoColor=white)
-  ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
-  ![Tailwind](https://img.shields.io/badge/Tailwind_v4-38B2AC?style=flat&logo=tailwindcss&logoColor=white)
-</div>
-
----
-
 ## 👩‍⚖️ For Judges (start here)
 
 **What it is:** a `did:t3n` autonomous escrow agent — a client funds a milestone, the freelancer and client each sign a cryptographic attestation, and when both match (or a deadline/arbiter rule fires) a Rust→WASM contract releases the payout. No single party — not even Escrowa — can move the funds alone.
+
+**▶ Demo video:** https://youtu.be/WzEVJwG1ebQ · **Live demo:** https://escrowa.edycu.dev
 
 **Tracks targeted**
 - 🥇 **$300 — Best Agent Auth SDK** (primary): a real least-privilege `agent-auth` implementation — see below.
@@ -51,13 +29,44 @@ npm run dev                        # then open http://localhost:3000 and click "
 
 ---
 
+<div align="center">
+  <img src="board/public/icon.svg" alt="Escrowa" width="120" height="120">
+
+  <h1>Escrowa 🛡️</h1>
+  <p><em>Get paid the moment the work is done — TEE-secured autonomous escrow agent.</em></p>
+  <img src="docs/readme-hero.png" alt="Escrowa Banner" width="100%">
+
+  <br/>
+
+  [![Live Demo](https://img.shields.io/badge/🚀_Live-Demo-06b6d4?style=for-the-badge)](https://escrowa.edycu.dev)
+  [![Pitch Video](https://img.shields.io/badge/🎬_Pitch-Video-ef4444?style=for-the-badge)](https://youtu.be/WzEVJwG1ebQ)
+  [![Built for DoraHacks](https://img.shields.io/badge/DoraHacks-T3_ADK_Bounty_Challenge-8b5cf6?style=for-the-badge)](https://dorahacks.io/hackathon/t3adkdevchallengebeta)
+
+  <br/>
+
+  ![Next.js](https://img.shields.io/badge/Next.js_16-black?style=flat&logo=next.js)
+  ![Rust](https://img.shields.io/badge/Rust_WASM-DEA584?style=flat&logo=rust&logoColor=white)
+  ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+  ![Tailwind](https://img.shields.io/badge/Tailwind_v4-38B2AC?style=flat&logo=tailwindcss&logoColor=white)
+  [![CI](https://github.com/edycutjong/escrows/actions/workflows/ci.yml/badge.svg)](https://github.com/edycutjong/escrows/actions/workflows/ci.yml)
+</div>
+
+---
+
 ## 🎬 See it in Action
 
 <div align="center">
   <img src="board/public/og-image.png" alt="Escrowa Board UI" width="100%">
 </div>
 
-> **The Flow:** Priya delivers the milestone milestone ➔ signs a cryptographic attestation ➔ client approves ➔ TEE enclave verifies signatures and triggers the in-enclave `signing` key to sign the payout ➔ `outbox` delivers the payout idempotently.
+> **The Flow:** Priya delivers the milestone ➔ signs a cryptographic attestation ➔ client approves ➔ TEE enclave verifies signatures and triggers the in-enclave `signing` key to sign the payout ➔ `outbox` delivers the payout idempotently.
+
+### The three control paths
+
+| ✅ Mutual release (`m1`) | ⏰ Deadline fallback (`m2`) | ⚖️ Arbiter refund (`m3`) |
+|:---:|:---:|:---:|
+| <img alt="m1 mutual release" src="https://github.com/user-attachments/assets/f89d8b12-63a3-46a4-9729-226f35b82bbc" width="100%"> | <img alt="m2 deadline release" src="https://github.com/user-attachments/assets/17075b7d-2b56-484c-aab8-6c70d34084cf" width="100%"> | <img alt="m3 arbiter refund" src="https://github.com/user-attachments/assets/677db0d8-f13c-40c6-8b48-36b3a7710954" width="100%"> |
+| Both parties attest → **released** | Client ghosts → **auto-release** at deadline | Disputed → arbiter **refunds** the client |
 
 ---
 

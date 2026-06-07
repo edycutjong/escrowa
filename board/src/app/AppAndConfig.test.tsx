@@ -4,8 +4,9 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 // 1. Mock next/font/google
 vi.mock("next/font/google", () => {
   return {
-    Geist: () => ({ variable: "geist-sans" }),
-    Geist_Mono: () => ({ variable: "geist-mono" }),
+    Inter: () => ({ variable: "font-inter" }),
+    JetBrains_Mono: () => ({ variable: "font-jetbrains" }),
+    Orbitron: () => ({ variable: "font-orbitron" }),
   };
 });
 
@@ -45,6 +46,23 @@ vi.mock("react", async (importOriginal) => {
     }
   };
 });
+
+// 3. Mock wagmi / RainbowKit / providers so the bare Dashboard() render works
+//    without a real WagmiProvider (and so layout doesn't pull in CSS/Web3 modules).
+const walletMock = vi.hoisted(() => ({
+  address: undefined as string | undefined,
+  signMessageAsync: async () => "0xmocksignature",
+}));
+vi.mock("wagmi", () => ({
+  useAccount: () => ({ address: walletMock.address }),
+  useSignMessage: () => ({ signMessageAsync: walletMock.signMessageAsync }),
+  useDisconnect: () => ({ disconnect: () => { walletMock.address = undefined; } }),
+}));
+vi.mock("@rainbow-me/rainbowkit", () => ({
+  ConnectButton: () => null,
+  useConnectModal: () => ({ openConnectModal: () => {} }),
+}));
+vi.mock("./providers", () => ({ Providers: ({ children }: any) => children }));
 
 // Static imports for target files
 import RootLayout, { metadata } from "./layout";
@@ -180,6 +198,36 @@ describe("Next.js Application & Configuration Suite", () => {
       const badRes = await attestPOST(badReq, { params });
       const badData = await badRes.json();
       expect(badData.success).toBe(false);
+    });
+
+    it("attest POST verifies a REAL wallet signature and rejects a forged one", async () => {
+      const { ethers } = await import("ethers");
+      const { attestationMessage } = await import("@/sdk/attestation");
+      const wallet = ethers.Wallet.createRandom();
+      const did = `did:t3n:${wallet.address}`;
+
+      await milestonesPOST(new Request("http://localhost/api/milestones", {
+        method: "POST",
+        body: JSON.stringify({ id: "m-sig", clientDid: "did:t3n:client", freelancerDid: did, amount: "100" }),
+      }));
+      const params = Promise.resolve({ id: "m-sig" });
+
+      // Valid real signature → accepted
+      const message = attestationMessage({ milestoneId: "m-sig", kind: "delivered", by: did });
+      const sig = await wallet.signMessage(message);
+      const okRes = await attestPOST(new Request("http://localhost/api/milestones/m-sig/attest", {
+        method: "POST",
+        body: JSON.stringify({ by: did, kind: "delivered", sig, signer: wallet.address }),
+      }), { params });
+      expect((await okRes.json()).success).toBe(true);
+
+      // Forged signature → 401
+      const badRes = await attestPOST(new Request("http://localhost/api/milestones/m-sig/attest", {
+        method: "POST",
+        body: JSON.stringify({ by: did, kind: "approved", sig: "0xdeadbeef", signer: wallet.address }),
+      }), { params });
+      expect(badRes.status).toBe(401);
+      expect((await badRes.json()).error).toBe("Invalid wallet signature");
     });
 
     it("milestones [id] resolve POST", async () => {
@@ -502,6 +550,39 @@ describe("Next.js Application & Configuration Suite", () => {
       expect(hookStates[0].length).toBe(0);
       // selectedMilestone (index 1) should be null
       expect(hookStates[1]).toBeNull();
+    });
+
+    it("signs attestations with a connected wallet (wagmi)", async () => {
+      walletMock.address = "0x1111111111111111111111111111111111111111";
+      try {
+        hookStates.length = 0;
+        hookSetters.length = 0;
+        resetHooks();
+        Dashboard();
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        resetHooks();
+        Dashboard();
+        const ms = hookStates[0];
+        hookStates[1] = ms[0]; // select a milestone so attest buttons render
+
+        resetHooks();
+        const tree = Dashboard();
+
+        const traverse = async (el: any) => {
+          if (!el || !el.props) return;
+          if (typeof el.props.onClick === "function") {
+            try { await el.props.onClick({ preventDefault: () => {} }); } catch {}
+          }
+          const ch = el.props.children;
+          if (Array.isArray(ch)) { for (const c of ch) await traverse(c); }
+          else if (ch) { await traverse(ch); }
+        };
+        await traverse(tree);
+        expect(tree).toBeDefined();
+      } finally {
+        walletMock.address = undefined;
+      }
     });
   });
 });

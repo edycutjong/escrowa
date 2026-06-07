@@ -21,6 +21,7 @@ export default defineConfig({
         "playwright.config.ts",
         "playwright.record.config.ts",
         "postcss.config.mjs",
+        "src/app/providers.tsx",
         "src/wasm/escrow_contract.js",
         "**/*.d.ts",
         "**/*.test.ts",

@@ -3,8 +3,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* Brand fonts — see docs/assets/_tokens.css */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --font-display: var(--font-orbitron), var(--font-inter), ui-sans-serif, sans-serif;
 
   /* Custom animations (registered so `animate-*` utilities are generated) */
   --animate-fade-in: fade-in 0.5s ease-out both;
@@ -39,14 +41,17 @@
 }
 
 :root {
-  --background: #04060c;
-  --foreground: #e2e8f0;
+  /* Brand surfaces/text — see docs/assets/_tokens.css */
+  --background: #0b1329; /* --bg-base */
+  --foreground: #f8fafc; /* --text-hi */
+  --brand-primary: #059669;
+  --brand-accent: #06b6d4;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -61,9 +66,9 @@ body {
   mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 30%, transparent 75%);
 }
 
-/* Gradient text helper */
+/* Gradient text helper — brand hero gradient (primary → accent) */
 .text-gradient {
-  background: linear-gradient(120deg, #6ee7b7, #34d399 40%, #2dd4bf 70%, #5eead4);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

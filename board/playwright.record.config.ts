@@ -6,7 +6,7 @@ import { defineConfig, devices } from "@playwright/test";
 // Outputs video to /Users/edycu/Projects/DemoStudio/017_Escrowa/recordings
 // and screenshots to .../017_Escrowa/screenshots (written by the spec itself).
 
-const DEMO_OUT = "/Users/edycu/Projects/DemoStudio/017_Escrowa/recordings";
+const DEMO_OUT = "recordings";
 
 export default defineConfig({
   testDir: "./demo",
@@ -24,7 +24,16 @@ export default defineConfig({
     launchOptions: { slowMo: 350 }, // make interactions readable on camera
   },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    // NOTE: spread the device FIRST, then override viewport — otherwise Desktop
+    // Chrome's 1280x720 viewport wins and the 1080p video records an upscaled crop.
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1920, height: 1080 },
+        deviceScaleFactor: 1,
+      },
+    },
   ],
   // Record against the dev server (reliable in-memory state); the Next.js dev
   // indicator is hidden via `devIndicators: false` in next.config.ts.

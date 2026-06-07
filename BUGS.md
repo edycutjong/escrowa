@@ -46,6 +46,55 @@ Consuming a `wasm32-wasip2` component from a modern JS bundler (Next.js 16 / Tur
 the ADK docs (see bug **B2** below for the concrete failure). A "consuming your contract from a
 web app" guide would close a real gap, since the TS client is the primary supported SDK.
 
+### A5. Most host interfaces are "Coming soon" for tenant contracts — including `agent-auth` (the bounty's own theme) and the whole transacting stack
+**Severity:** high (blocks the promoted use cases) · **Area:** docs / capability gap
+
+Per the host-API table (`t3n/how-t3n-works/host-api`), only **`kv-store`** (plus the base
+`logging` / `tenant-context`, and `http`) is **✅ available** to tenant contracts. **`signing`,
+`outbox`, `vp`, `did-registry`, and `agent-auth` are all marked "Coming soon."** Yet the overview /
+use-case docs front-and-center promote agents that **transact** (booking + payment, B2B settlement)
+and manage **identity/delegation** — none of which a tenant contract can actually do on the live
+network today. Notably the **$300 track is "Best Agent Auth SDK"** while the `agent-auth` host
+interface itself is "Coming soon" for tenant contracts. **Suggested fix:** surface the availability
+column on the use-case pages, and clarify what a builder can ship *today* vs. what's forthcoming.
+(This is why Escrowa runs against a local simulation — see the README "Hackathon Simulation Context".)
+
+### A6. Contract identity is a `z:<tid>:<tail>` script name + numeric `contract_id`, not an address; the node URL is SDK-resolved
+**Severity:** medium · **Area:** docs clarity / onboarding
+
+Coming from EVM, we expected `register()` to return a `0x` contract address. It instead returns a
+numeric `contract_id` + a `z:<tenantId>:<tail>` **script name** (used for `executeAndDecode`). Also,
+there is **no static REST base** — `https://api.terminal3.io/v1/*` returns **404**; the node URL is
+resolved by the SDK via `setEnvironment("testnet"|"production")` / `getNodeUrl()`. Both cost time.
+**Suggested fix:** a short "contract identity & endpoints" note ("not an address — a script name;
+don't hardcode a base URL").
+
+### A7. The required WIT import/export names live only in a "tips" page, not the main walkthrough
+**Severity:** medium · **Area:** docs structure
+
+Capabilities come from WIT imports like `import t3n:host/kv-store@0.1.0;` and the component must
+export `t3n:contract/dispatch@0.1.0;`. These exact names — the difference between a contract that
+registers and one that doesn't — are only in `tips/capabilities-from-wit-import`, not in the
+`write-contract`/`build-contract` walkthrough where a builder first needs them.
+
+### A8. Developer guide is split across two URL trees with weak cross-linking
+**Severity:** low · **Area:** docs discoverability
+
+Conceptual docs live under `docs.terminal3.io/t3n/...` while the actual ADK developer guide
+(prerequisites, write/build/register/invoke walkthrough, host-API, OpenAPI) lives under
+`docs.terminal3.io/developers/adk/...`. The two aren't strongly linked — a reader (or a crawler)
+starting from the overview/use-case pages never reaches the walkthrough; only `llms.txt` ties them
+together. **Suggested fix:** a prominent "Start building" link from the overview into `/developers/adk`.
+
+### A9. The OpenAPI spec links in `llms.txt` are broken (404)
+**Severity:** low · **Area:** docs / broken links
+
+`https://docs.terminal3.io/llms.txt` lists an **`## OpenAPI Specs`** section pointing to
+`https://docs.terminal3.io/terminal-3-openapi.yml` and `https://docs.terminal3.io/api-reference/openapi.json`,
+but both return **HTTP 404** (verified with and without a browser User-Agent). So there's no
+machine-readable API spec reachable from the advertised location. **Suggested fix:** publish the
+spec at those URLs or correct the index links.
+
 ---
 
 ## B. Escrowa — bugs we found and fixed

@@ -32,7 +32,7 @@ npm run dev                        # then open http://localhost:3000 and click "
 <div align="center">
   <img src="board/public/icon.svg" alt="Escrowa" width="120" height="120">
 
-  <h1>Escrowa 🛡️</h1>
+  <h1>Escrowa 🔲</h1>
   <p><em>Get paid the moment the work is done — TEE-secured autonomous escrow agent.</em></p>
   <img src="docs/readme-hero.png" alt="Escrowa Banner" width="100%">
 
@@ -48,7 +48,7 @@ npm run dev                        # then open http://localhost:3000 and click "
   ![Rust](https://img.shields.io/badge/Rust_WASM-DEA584?style=flat&logo=rust&logoColor=white)
   ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
   ![Tailwind](https://img.shields.io/badge/Tailwind_v4-38B2AC?style=flat&logo=tailwindcss&logoColor=white)
-  [![CI](https://github.com/edycutjong/escrows/actions/workflows/ci.yml/badge.svg)](https://github.com/edycutjong/escrows/actions/workflows/ci.yml)
+  [![CI](https://github.com/edycutjong/escrowa/actions/workflows/ci.yml/badge.svg)](https://github.com/edycutjong/escrowa/actions/workflows/ci.yml)
 </div>
 
 ---

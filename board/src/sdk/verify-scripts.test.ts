@@ -8,7 +8,7 @@ describe("Verification Scripts E2E", () => {
     // Clear NODE_V8_COVERAGE to prevent the child process from interfering with Vitest's coverage collection
     const cleanEnv = { ...process.env };
     delete cleanEnv.NODE_V8_COVERAGE;
-    const output = execSync(`npx --no-install vite-node "${scriptPath}"`, {
+    const output = execSync(`npx --yes vite-node "${scriptPath}"`, {
       encoding: "utf8",
       env: cleanEnv,
     });
@@ -20,7 +20,7 @@ describe("Verification Scripts E2E", () => {
     const scriptPath = path.resolve(__dirname, "../../../scripts/verify_no_unilateral.ts");
     const cleanEnv = { ...process.env };
     delete cleanEnv.NODE_V8_COVERAGE;
-    const output = execSync(`npx --no-install vite-node "${scriptPath}"`, {
+    const output = execSync(`npx --yes vite-node "${scriptPath}"`, {
       encoding: "utf8",
       env: cleanEnv,
     });

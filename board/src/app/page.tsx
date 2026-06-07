@@ -221,9 +221,9 @@ export default function Dashboard() {
       <header className="border-b border-slate-800 bg-slate-900/40 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-18 flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <div className="relative shrink-0">
               <div aria-hidden className="absolute inset-0 rounded-xl bg-emerald-500/40 blur-md animate-glow" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icon.svg" alt="Escrowa Logo" className="relative w-10 h-10 object-contain" />
             </div>
             <div>

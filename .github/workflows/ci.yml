@@ -11,9 +11,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ── STAGE 1: Code Quality & Rust Build ────────────────────
-  quality-and-wasm:
-    name: "Stage 1 · Quality & Rust Build"
+  # ── STAGE 1: Code Quality ───────────────────────────────
+  quality-board:
+    name: "Stage 1 · Quality Board"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,19 +29,27 @@ jobs:
       - name: Install Node dependencies
         run: cd board && npm ci
 
-      - name: Lint Next.js
-        run: cd board && npm run lint
+      - name: Run Board CI Script
+        run: cd board && npm run ci
 
-      - name: Typecheck Next.js
-        run: cd board && npm run typecheck
-
-      - name: Run Unit Tests
-        run: cd board && npm run test
+  quality-contract:
+    name: "Stage 1 · Quality Contract"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-wasip2
+          components: clippy, rustfmt
+
+      - name: Rust Format Check
+        run: cargo fmt --manifest-path contract/Cargo.toml -- --check
+
+      - name: Rust Clippy
+        run: cargo clippy --manifest-path contract/Cargo.toml --target wasm32-wasip2 --release -- -D warnings
 
       - name: Build Rust WASM Contract
         run: cargo build --manifest-path contract/Cargo.toml --target wasm32-wasip2 --release
@@ -71,7 +79,7 @@ jobs:
   # ── STAGE 3: Build Verification ───────────────────────────
   build:
     name: "Stage 3 · Build Verification"
-    needs: [quality-and-wasm]
+    needs: [quality-board, quality-contract]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

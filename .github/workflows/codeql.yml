@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'javascript-typescript' ]
+        language: [ 'javascript-typescript', 'rust' ]
 
     steps:
     - name: Checkout repository
@@ -31,8 +31,11 @@ jobs:
       with:
         languages: ${{ matrix.language }}
 
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
+    - name: Build Rust Contract
+      if: matrix.language == 'rust'
+      run: |
+        rustup target add wasm32-wasip2
+        cargo build --manifest-path contract/Cargo.toml --target wasm32-wasip2 --release
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3

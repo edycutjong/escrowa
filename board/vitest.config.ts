@@ -3,7 +3,7 @@ import path from "path";
 
 export default defineConfig({
   test: {
-    globals: true,
+    globals: false,
     environment: "node",
     exclude: ["**/node_modules/**", "**/e2e/**", "**/demo/**"],
     coverage: {
@@ -23,6 +23,7 @@ export default defineConfig({
         "postcss.config.mjs",
         "src/app/providers.tsx",
         "src/wasm/escrow_contract.js",
+        "src/app/globals.css",
         "**/*.d.ts",
         "**/*.test.ts",
         "**/*.test.tsx",

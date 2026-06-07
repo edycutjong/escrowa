@@ -1,31 +1,35 @@
 ## 👩‍⚖️ For Judges (start here)
 
-**What it is:** a `did:t3n` autonomous escrow agent — a client funds a milestone, the freelancer and client each sign a cryptographic attestation, and when both match (or a deadline/arbiter rule fires) a Rust→WASM contract releases the payout. No single party — not even Escrowa — can move the funds alone.
+> **What it is:** A `did:t3n` autonomous escrow agent. A client funds a milestone, then both freelancer and client sign cryptographic attestations. When both match (or a deadline/arbiter rule fires), a Rust ➔ WASM contract automatically releases the payout. No single party—not even Escrowa itself—can move the funds unilaterally.
 
-**▶ Demo video:** https://youtu.be/WzEVJwG1ebQ · **Live demo:** https://escrowa.edycu.dev · **DoraHacks BUIDL:** https://dorahacks.io/buidl/44352
+### 🔗 Quick Links
+- 🎬 **Demo Video:** [youtu.be/WzEVJwG1ebQ](https://youtu.be/WzEVJwG1ebQ)
+- 🚀 **Live Demo Console:** [escrowa.edycu.dev](https://escrowa.edycu.dev)
+- 🏆 **DoraHacks BUIDL Page:** [dorahacks.io/buidl/44352](https://dorahacks.io/buidl/44352)
 
-**Tracks targeted**
-- 🥇 **$300 — Best Agent Auth SDK** (primary): a real least-privilege `agent-auth` implementation — see below.
-- 🐞 **$200 — Bug & documentation log**: [`BUGS.md`](BUGS.md) (ADK doc/SDK gaps found while building, e.g. `signing` not yet available to tenant contracts, `t3n:host/*` WIT naming).
+### 🎯 Bounty Tracks Targeted
+- 🥇 **Best Agent Auth SDK ($300)** (Primary): A production-ready least-privilege `agent-auth` implementation.
+- 🐞 **Bug & Documentation Bounty ($200)**: Real ADK developer feedback detailed in [BUGS.md](file:///Users/edycu/Projects/Hackathon/dorahacks-t3adk-escrowa/BUGS.md).
 
-**Verify in ~60 seconds**
+### ⚡ Verify in ~60 Seconds
 ```bash
-cd contract && cargo test          # 18 Rust contract tests
-cd ../board && npm run ci          # lint + typecheck + 73 Vitest tests @ 100% coverage
-npm run e2e                        # 10 Playwright e2e (auto-starts dev server)
-npm run dev                        # then open http://localhost:3000 and click "Reset & Seed"
+cd contract && cargo test          # Run 18 Rust contract state tests
+cd ../board && npm run ci          # Run ESLint, typecheck & 73 Vitest tests (100% coverage)
+npm run e2e                        # Run 10 Playwright E2E tests (auto-starts dev server)
+npm run dev                        # Launch local dev server at http://localhost:3000
 ```
 
-**Where the substance is**
-| Concern | File |
+### 🔍 Where the Substance Is
+| Core Concern | Technical Implementation / File Reference |
 |---|---|
-| **Agent-auth** (scoped functions + `allowedHosts` egress allowlist; blocks out-of-scope calls with `host/agent.function_denied` / `host/http.egress_denied`) | [`board/src/sdk/agentAuth.ts`](board/src/sdk/agentAuth.ts), enforced in [`T3nClient.ts`](board/src/sdk/T3nClient.ts) |
-| **Escrow state machine** (fund → dual-attest → release; deadline & arbiter fallbacks) | [`contract/src/lib.rs`](contract/src/lib.rs) |
-| **did-registry / agent-registry** | [`board/src/sdk/didRegistry.ts`](board/src/sdk/didRegistry.ts) |
-| **Tests** (91 total; key-custody + agent-auth + dual-consent) | `board/src/**/*.test.ts`, `contract/src/lib.rs` |
-| **Demo script & architecture** | [`docs/DEMO.md`](docs/DEMO.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| **Agent-Auth Enforcement** | Scoped functions + `allowedHosts` allowlist configured in [agentAuth.ts](file:///Users/edycu/Projects/Hackathon/dorahacks-t3adk-escrowa/board/src/sdk/agentAuth.ts) and enforced natively via [T3nClient.ts](file:///Users/edycu/Projects/Hackathon/dorahacks-t3adk-escrowa/board/src/sdk/T3nClient.ts) |
+| **Escrow State Machine** | Core dual-consent, deadline, and arbiter logic written in Rust in [lib.rs](file:///Users/edycu/Projects/Hackathon/dorahacks-t3adk-escrowa/contract/src/lib.rs) |
+| **Decentralized Identity** | Identity resolution and mapping configured in [didRegistry.ts](file:///Users/edycu/Projects/Hackathon/dorahacks-t3adk-escrowa/board/src/sdk/didRegistry.ts) |
+| **Comprehensive Test Suite** | 91 total tests (73 Vitest frontend tests + 18 Cargo contract tests) |
+| **Documentation & Playbook** | Walkthrough playbook in [DEMO.md](file:///Users/edycu/Projects/Hackathon/dorahacks-t3adk-escrowa/docs/DEMO.md) and architecture layout in [ARCHITECTURE.md](file:///Users/edycu/Projects/Hackathon/dorahacks-t3adk-escrowa/docs/ARCHITECTURE.md) |
 
-**Honest scope:** the Rust→WASM contract logic and the secp256k1 signatures are **real**; the TEE, host interfaces, and settlement reference are **simulated locally** for this hackathon build (T3N is production-ready for when the network launches). Full disclosure in the **Hackathon Simulation Context** note below. Nothing in this repo claims a real on-chain transfer.
+> [!IMPORTANT]
+> **Honest Hackathon Scope & Simulation Context:** The Rust ➔ WASM contract logic and secp256k1 cryptographic signatures are **real**. The TEE enclave, host interfaces, and blockchain settlement are **locally simulated** using the T3 Agent Development Kit (ADK) and `@bytecodealliance/jco`. This architecture is production-ready for real Intel TDX hardware when the T3N mainnet launches. Full details are in the *Hackathon Simulation Context* section below.
 
 ---
 

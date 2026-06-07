@@ -163,6 +163,9 @@ jobs:
 
       - name: Run Performance Audit
         run: cd board && npm run lighthouse
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          LHCI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
   # ── STAGE 6: Deploy Gate ──────────────────────────────────

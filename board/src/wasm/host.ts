@@ -63,3 +63,16 @@ export function httpPostPlaceholder(url: string, templateBody: string, userDid: 
 export function clearStore() {
   kvStore.clear();
 }
+
+// Snapshot the in-memory KV store (for persisting to a durable store between requests).
+export function exportStore(): Record<string, string> {
+  return Object.fromEntries(kvStore.entries());
+}
+
+// Replace the in-memory KV store from a snapshot (hydrate at request start).
+export function importStore(entries: Record<string, string>): void {
+  kvStore.clear();
+  for (const [k, v] of Object.entries(entries)) {
+    kvStore.set(k, v);
+  }
+}

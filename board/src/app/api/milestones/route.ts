@@ -1,14 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { T3nClient, createEthAuthInput } from "@/sdk/T3nClient";
+import { hydrate, persist } from "@/sdk/store";
 
 export async function GET() {
+  await hydrate();
   const milestones = T3nClient.getAllMilestones();
   return NextResponse.json(milestones);
 }
 
 export async function POST(req: Request) {
   try {
+    await hydrate();
     const body = await req.json();
     const { id, clientDid, freelancerDid, amount, requireDelivered, requireApproved, deadline, arbiter } = body;
 
@@ -34,6 +37,7 @@ export async function POST(req: Request) {
       },
     });
 
+    await persist();
     return NextResponse.json({ success: true, milestone });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });

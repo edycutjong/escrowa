@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { T3nClient, createEthAuthInput } from "@/sdk/T3nClient";
+import { hydrate, persist } from "@/sdk/store";
 
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await hydrate();
     const { id } = await params;
     const body = await req.json();
     const { by, action } = body;
@@ -27,6 +29,7 @@ export async function POST(
       },
     });
 
+    await persist();
     return NextResponse.json({ success: true, milestone });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });

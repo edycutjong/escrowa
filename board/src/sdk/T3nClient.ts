@@ -108,6 +108,15 @@ export class T3nClient {
     return Array.from(this.syncCache.values());
   }
 
+  // Rebuild the synchronous UI cache from a hydrated set of milestones
+  // (used after loading state from the durable store on a fresh serverless instance).
+  static hydrateCacheFrom(milestones: Milestone[]) {
+    this.syncCache.clear();
+    for (const m of milestones) {
+      this.syncCache.set(m.id, m);
+    }
+  }
+
   contracts = {
     register: async (params: { tail: string; version: string; wasm: any }) => {
       return { success: true, contract_id: 1001, script_name: `z:tenant:${params.tail}` };

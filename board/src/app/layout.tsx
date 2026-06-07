@@ -21,7 +21,7 @@ const orbitron = Orbitron({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("http://localhost:3000"),
+  metadataBase: new URL("https://escrowa.edycu.dev"),
   title: "Escrowa — TEE-secured Autonomous Escrow Agent",
   description: "Get paid the moment the work is done. A did:t3n escrow agent that secures funds in a TEE and releases them when both sides agree.",
   icons: {

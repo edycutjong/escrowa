@@ -90,23 +90,23 @@ Priya shipped the final milestone of a 6-week remote development contract. The c
 
 ```mermaid
 flowchart LR
-    C[Client] -->|fund milestone| ESC
-    F[Freelancer] -->|attest: delivered (sig)| ESC
-    C -->|attest: approved (sig)| ESC
+    C[Client] -->|"fund milestone"| ESC
+    F[Freelancer] -->|"attest: delivered (sig)"| ESC
+    C -->|"attest: approved (sig)"| ESC
     subgraph ESC["Escrowa agent (did:t3n)"]
-      API[/REST API/]
-      CLI[T3nClient.executeAndDecode]
+      API["REST API"]
+      CLI["T3nClient.executeAndDecode"]
     end
     subgraph T3["T3N TEE (Intel TDX / Wasmtime)"]
-      DISP[escrow contract: dispatch]
-      COND[release conditions]
-      SIGN[signing: per-wallet secp256k1]
-      OUT[outbox: idempotent payout]
+      DISP["escrow contract: dispatch"]
+      COND["release conditions"]
+      SIGN["signing: per-wallet secp256k1"]
+      OUT["outbox: idempotent payout"]
     end
-    API --> CLI -->|execute fn| DISP --> COND
-    COND -->|delivered ∧ approved → sign release| SIGN --> OUT -->|tokens → freelancer| TX[(settlement)]
-    ESC -. did:t3n .-> REG[did-registry / agent-registry]
-    OUT --> DASH[Audit dashboard]
+    API --> CLI -->|"execute fn"| DISP --> COND
+    COND -->|"delivered AND approved -> sign release"| SIGN --> OUT -->|"tokens -> freelancer"| TX[("settlement")]
+    ESC -. "did:t3n" .-> REG["did-registry / agent-registry"]
+    OUT --> DASH["Audit dashboard"]
 ```
 
 1. **Fund:** Client locks test tokens in the contract.

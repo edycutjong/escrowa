@@ -3,6 +3,7 @@ import { T3nClient, createEthAuthInput } from "@/sdk/T3nClient";
 import { clearStore } from "@/wasm/host";
 import { registerDid, registerAgent } from "@/sdk/didRegistry";
 import { updateAgentAuth, ESCROWA_AGENT_DID, ESCROWA_DEFAULT_SCOPE } from "@/sdk/agentAuth";
+import { persist } from "@/sdk/store";
 
 export async function POST() {
   T3nClient.clearStore();
@@ -117,9 +118,11 @@ export async function POST() {
       },
     });
 
+    await persist();
     return NextResponse.json({ success: true, message: "Deterministic scenarios seeded" });
   } catch (e: unknown) {
     if (e instanceof Error && (e.message?.includes("already exists") || e.message?.includes("already completed") || e.message?.includes("already attested"))) {
+      await persist();
       return NextResponse.json({ success: true, message: "Already seeded (ignoring error)" });
     }
     throw e;

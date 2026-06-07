@@ -12,7 +12,7 @@
 - Publish the escrow client as npm **`escrowa-sdk`** — `createMilestone()`, `attest()`, `release()`. A judge can fund a milestone and watch a release fire.
 
 ## Tests
-- **54 Vitest test cases** (15 app/API + 39 SDK; 100% coverage; 115+ assertions incl. a 100-case matrix) + **18 Rust contract tests** = **72 total**.
+- **73 Vitest test cases** (100% coverage; 115+ assertions incl. a 100-case matrix) + **18 Rust contract tests** = **91 total**.
 - Coverage: the 4 release paths (mutual / deadline / arbiter / unfunded-reject), signature verification against did:t3n, **agent-auth scope enforcement** (`host/agent.function_denied` + `host/http.egress_denied`), and a **key-custody test that fails if the escrow private key ever appears in logs, env, or disk**.
 
 ## Benchmark

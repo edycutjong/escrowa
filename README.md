@@ -11,7 +11,7 @@
 **Verify in ~60 seconds**
 ```bash
 cd contract && cargo test          # 18 Rust contract tests
-cd ../board && npm run ci          # lint + typecheck + 54 Vitest tests @ 100% coverage
+cd ../board && npm run ci          # lint + typecheck + 73 Vitest tests @ 100% coverage
 npm run e2e                        # 10 Playwright e2e (auto-starts dev server)
 npm run dev                        # then open http://localhost:3000 and click "Reset & Seed"
 ```
@@ -22,7 +22,7 @@ npm run dev                        # then open http://localhost:3000 and click "
 | **Agent-auth** (scoped functions + `allowedHosts` egress allowlist; blocks out-of-scope calls with `host/agent.function_denied` / `host/http.egress_denied`) | [`board/src/sdk/agentAuth.ts`](board/src/sdk/agentAuth.ts), enforced in [`T3nClient.ts`](board/src/sdk/T3nClient.ts) |
 | **Escrow state machine** (fund → dual-attest → release; deadline & arbiter fallbacks) | [`contract/src/lib.rs`](contract/src/lib.rs) |
 | **did-registry / agent-registry** | [`board/src/sdk/didRegistry.ts`](board/src/sdk/didRegistry.ts) |
-| **Tests** (72 total; key-custody + agent-auth + dual-consent) | `board/src/**/*.test.ts`, `contract/src/lib.rs` |
+| **Tests** (91 total; key-custody + agent-auth + dual-consent) | `board/src/**/*.test.ts`, `contract/src/lib.rs` |
 | **Demo script & architecture** | [`docs/DEMO.md`](docs/DEMO.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 
 **Honest scope:** the Rust→WASM contract logic and the secp256k1 signatures are **real**; the TEE, host interfaces, and settlement reference are **simulated locally** for this hackathon build (T3N is production-ready for when the network launches). Full disclosure in the **Hackathon Simulation Context** note below. Nothing in this repo claims a real on-chain transfer.

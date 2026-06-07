@@ -15,7 +15,14 @@ test("Escrowa — full demo walkthrough (video + screenshots)", async ({ page })
   // ── Scene 1: The dashboard / identity ───────────────────────────────
   await page.goto("/");
   await expect(page.locator("header").getByText("Escrowa", { exact: true })).toBeVisible();
-  await beat(page, 2500);
+  await beat(page, 1500);
+  
+  // Perform scroll down and scroll up actions
+  await page.mouse.wheel(0, 600);
+  await beat(page, 1500);
+  await page.mouse.wheel(0, -600);
+  await beat(page, 1000);
+  
   await shot(page, "01-hero-dashboard");
 
   // ── Scene 2: Seed the deterministic scenarios ──────────────────────

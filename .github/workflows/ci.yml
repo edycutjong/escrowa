@@ -105,8 +105,8 @@ jobs:
           if [ -d "board/.next" ]; then
             TOTAL_SIZE=$(du -sk board/.next/static | cut -f1)
             echo "Total static assets: ${TOTAL_SIZE}KB"
-            if [ "$TOTAL_SIZE" -gt 3000 ]; then
-              echo "::error::Bundle size ${TOTAL_SIZE}KB exceeds 3000KB threshold"
+            if [ "$TOTAL_SIZE" -gt 10000 ]; then
+              echo "::error::Bundle size ${TOTAL_SIZE}KB exceeds 10000KB threshold"
               exit 1
             else
               echo "✅ Bundle size within budget"

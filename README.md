@@ -2,7 +2,7 @@
 
 **What it is:** a `did:t3n` autonomous escrow agent — a client funds a milestone, the freelancer and client each sign a cryptographic attestation, and when both match (or a deadline/arbiter rule fires) a Rust→WASM contract releases the payout. No single party — not even Escrowa — can move the funds alone.
 
-**▶ Demo video:** https://youtu.be/WzEVJwG1ebQ · **Live demo:** https://escrowa.edycu.dev
+**▶ Demo video:** https://youtu.be/WzEVJwG1ebQ · **Live demo:** https://escrowa.edycu.dev · **DoraHacks BUIDL:** https://dorahacks.io/buidl/44352
 
 **Tracks targeted**
 - 🥇 **$300 — Best Agent Auth SDK** (primary): a real least-privilege `agent-auth` implementation — see below.
@@ -41,6 +41,7 @@ npm run dev                        # then open http://localhost:3000 and click "
   [![Live Demo](https://img.shields.io/badge/🚀_Live-Demo-06b6d4?style=for-the-badge)](https://escrowa.edycu.dev)
   [![Pitch Video](https://img.shields.io/badge/🎬_Pitch-Video-ef4444?style=for-the-badge)](https://youtu.be/WzEVJwG1ebQ)
   [![Built for DoraHacks](https://img.shields.io/badge/DoraHacks-T3_ADK_Bounty_Challenge-8b5cf6?style=for-the-badge)](https://dorahacks.io/hackathon/t3adkdevchallengebeta)
+  [![DoraHacks BUIDL](https://img.shields.io/badge/DoraHacks-View_BUIDL_%2344352-a855f7?style=for-the-badge)](https://dorahacks.io/buidl/44352)
 
   <br/>
 
@@ -216,10 +217,10 @@ Run the benchmarks:
 ./scripts/bench.py
 ```
 
-### Results
-* **Mean Latency:** 0.006765 ms
-* **p50 (Median):** 0.005125 ms
-* **p95 Latency:** 0.011000 ms
+### Results (200 full-lifecycle evals; varies run to run)
+* **Mean Latency:** ~3.4 ms
+* **p50 (Median):** ~2.3 ms
+* **p95 Latency:** ~8.6 ms
 
 ---
 

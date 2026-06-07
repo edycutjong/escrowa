@@ -158,6 +158,9 @@ jobs:
       - name: Install Node dependencies
         run: cd board && npm ci
 
+      - name: Build Next.js
+        run: cd board && npm run build
+
       - name: Run Performance Audit
         run: cd board && npm run lighthouse
         continue-on-error: true

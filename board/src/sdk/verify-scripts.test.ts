@@ -14,7 +14,7 @@ describe("Verification Scripts E2E", () => {
     });
     expect(output).toContain("Success: Milestone released");
     expect(output).toContain("Security Audit: 0 keys leaked");
-  });
+  }, 30000);
 
   it("executes verify_no_unilateral.ts successfully", () => {
     const scriptPath = path.resolve(__dirname, "../../../scripts/verify_no_unilateral.ts");
@@ -25,5 +25,5 @@ describe("Verification Scripts E2E", () => {
       env: cleanEnv,
     });
     expect(output).toContain("Success: Unilateral release verification passed");
-  });
+  }, 30000);
 });

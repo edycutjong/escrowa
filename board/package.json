@@ -44,7 +44,7 @@
     "eslint-config-next": "16.2.7",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.10"
   },
   "overrides": {
     "cookie": "^0.7.0",
